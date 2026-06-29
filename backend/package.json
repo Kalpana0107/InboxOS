@@ -1,0 +1,19 @@
+{
+  "name": "inboxos-backend",
+  "version": "1.0.0",
+  "description": "InboxOS Node.js Backend",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "migrate:dev": "prisma migrate dev"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.16.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "prisma": "^5.16.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.2"
+  }
+}

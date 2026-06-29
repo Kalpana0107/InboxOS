@@ -1,0 +1,39 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  emails       Email[]
+}
+
+model Thread {
+  id        String   @id @default(uuid())
+  summary   String?
+  createdAt DateTime @default(now())
+  emails    Email[]
+}
+
+model Email {
+  id        String   @id @default(uuid())
+  sender    String
+  recipient String
+  subject   String
+  body      String
+  status    String   @default("UNREAD")
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  threadId  String
+  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+}
