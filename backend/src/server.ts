@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { AuthService } from './services/auth.service';
 import { requireAuth, AuthenticatedRequest } from './middleware/auth.middleware';
+import { EventBus } from './services/event-bus.service';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -206,7 +207,10 @@ app.post('/api/webhooks/incoming', async (req: Request, res: Response) => {
       },
     });
 
-    // 5. Return 201 Created immediately
+    // 5. Publish event to decouple AI processing
+    await EventBus.publish('email.received', { emailId: emailRecord.id });
+
+    // 6. Return 201 Created immediately
     return res.status(201).json({
       message: 'Email ingested successfully',
       email: {
