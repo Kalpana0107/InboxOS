@@ -1,6 +1,8 @@
 import { EventBus } from './services/event-bus.service';
 import { PrismaClient } from '@prisma/client';
 import { AIService } from './services/ai.service';
+import { logger } from './utils/logger';
+import { emailsProcessedCounter } from './utils/metrics';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -9,13 +11,17 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const prisma = new PrismaClient();
 
+/**
+ * Subscribes to the event bus and processes emails asynchronously.
+ * Logs structured JSON events and updates Prometheus metrics.
+ */
 export async function registerWorkerHandlers() {
-  console.log('Registering email processing workers...');
+  logger.info('Registering email processing workers...');
 
   // Subscribe to 'email.received' topic
   await EventBus.subscribe('email.received', async (payload: { emailId: string }) => {
     const { emailId } = payload;
-    console.log(`[Worker] Received email.received event! emailId: ${emailId}`);
+    logger.info('[Worker] Received email.received event', { emailId });
 
     try {
       // 1. Fetch the email from database
@@ -24,15 +30,15 @@ export async function registerWorkerHandlers() {
       });
 
       if (!email) {
-        console.error(`[Worker] Email with ID ${emailId} not found in database.`);
+        logger.error('[Worker] Email not found in database', { emailId });
         return;
       }
 
-      console.log(`[Worker] Processing email classification for: "${email.subject}"`);
+      logger.info('[Worker] Processing email classification', { emailId });
 
       // 2. Classify email using AIService
       const result = await AIService.classifyEmail(email.subject, email.body);
-      console.log(`[Worker] Classification result for "${email.subject}": category = ${result.category}, confidence = ${result.confidence}`);
+      logger.info('[Worker] Email classification result', { emailId, category: result.category, confidence: result.confidence });
 
       // 3. Update the email with the category
       await prisma.email.update({
@@ -42,14 +48,14 @@ export async function registerWorkerHandlers() {
         },
       });
 
-      console.log(`[Worker] Email updated successfully!`);
+      logger.info('[Worker] Email classification updated successfully in database', { emailId });
 
       // 4. Extract and save actions
-      console.log(`[Worker] Extracting actions for: "${email.subject}"`);
+      logger.info('[Worker] Extracting action items from email', { emailId });
       const actions = await AIService.extractActions(email.subject, email.body);
       
       if (actions && actions.length > 0) {
-        console.log(`[Worker] Found ${actions.length} action items. Saving...`);
+        logger.info('[Worker] Saving extracted action items', { emailId, count: actions.length });
         await prisma.actionItem.createMany({
           data: actions.map((task) => ({
             emailId: email.id,
@@ -57,14 +63,20 @@ export async function registerWorkerHandlers() {
             isCompleted: false,
           })),
         });
-        console.log(`[Worker] Saved action items successfully.`);
+        logger.info('[Worker] Saved action items successfully', { emailId });
       } else {
-        console.log(`[Worker] No action items extracted.`);
+        logger.info('[Worker] No action items extracted from email', { emailId });
       }
 
+      // Increment successful processing counter
+      emailsProcessedCounter.inc({ status: 'success' });
+
     } catch (error: any) {
-      console.error(`[Worker] Classification failed for emailId ${emailId}:`, error.message || error);
+      logger.error('[Worker] Classification/extraction failed for email', { emailId, error: error.message || error });
       
+      // Increment failed processing counter
+      emailsProcessedCounter.inc({ status: 'failed' });
+
       // Mark email status as 'FAILED'
       try {
         await prisma.email.update({
@@ -73,21 +85,22 @@ export async function registerWorkerHandlers() {
             status: 'FAILED',
           },
         });
-        console.log(`[Worker] Updated email ${emailId} status to 'FAILED'.`);
-      } catch (dbError) {
-        console.error(`[Worker] Failed to update email ${emailId} status to 'FAILED':`, dbError);
+        logger.info('[Worker] Updated email status to FAILED in database', { emailId });
+      } catch (dbError: any) {
+        logger.error('[Worker] Failed to update email status to FAILED in database', { emailId, error: dbError.message || dbError });
       }
     }
   });
 
-  console.log('Worker handlers registered and listening for events.');
+  logger.info('Worker handlers registered and listening for events.');
 }
 
 // Only run automatically if executed directly as the entry point
 if (require.main === module || (process.argv[1] && process.argv[1].endsWith('worker.ts'))) {
-  console.log('Worker starting as standalone process...');
+  logger.info('Worker starting as standalone process...');
   registerWorkerHandlers().catch((error) => {
-    console.error('Worker failed to start:', error);
+    logger.error('Worker failed to start', { error: error.message || error });
     process.exit(1);
   });
 }
+

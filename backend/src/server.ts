@@ -11,6 +11,8 @@ import { z } from 'zod';
 import { AuthService } from './services/auth.service';
 import { requireAuth, AuthenticatedRequest } from './middleware/auth.middleware';
 import { rateLimiter } from './middleware/rate-limiter.middleware';
+import client from './utils/metrics';
+import { logger } from './utils/logger';
 import { EventBus } from './services/event-bus.service';
 import { google } from 'googleapis';
 import crypto from 'crypto';
@@ -47,6 +49,39 @@ app.use((req, res, next) => {
     return;
   }
   next();
+});
+
+app.get('/metrics', async (req: Request, res: Response) => {
+  const ip = req.ip || req.socket.remoteAddress || '';
+  const cleanIp = ip.startsWith('::ffff:') ? ip.substring(7) : ip;
+  const isLocalhost = cleanIp === '127.0.0.1' || cleanIp === '::1' || cleanIp === 'localhost';
+
+  let isPrivate = false;
+  const ipParts = cleanIp.split('.');
+  if (ipParts.length === 4) {
+    const first = parseInt(ipParts[0], 10);
+    const second = parseInt(ipParts[1], 10);
+    if (first === 10) isPrivate = true;
+    if (first === 172 && second >= 16 && second <= 31) isPrivate = true;
+    if (first === 192 && second === 168) isPrivate = true;
+  }
+
+  const metricsToken = process.env.METRICS_TOKEN;
+  const tokenHeader = req.headers['x-metrics-token'];
+  const hasValidToken = metricsToken && tokenHeader === metricsToken;
+
+  if (!isLocalhost && !isPrivate && !hasValidToken) {
+    logger.warn('Forbidden access attempt to /metrics', { ip: cleanIp });
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  try {
+    res.set('Content-Type', client.register.contentType);
+    res.end(await client.register.metrics());
+  } catch (err: any) {
+    logger.error('Failed to generate Prometheus metrics', { error: err.message });
+    res.status(500).end(err);
+  }
 });
 
 app.use(express.json());
@@ -92,7 +127,7 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
 
@@ -144,7 +179,7 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
 
@@ -431,7 +466,7 @@ app.get('/api/integrations/gmail/callback', async (req: Request, res: Response) 
       res.cookie('token', jwtToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000,
       });
 
@@ -633,7 +668,7 @@ app.get('/api/auth/google', (req: Request, res: Response) => {
 // Start Server
 
 const server = app.listen(PORT, () => {
-  console.log(`Auth service running on port ${PORT}`);
+  logger.info(`Auth service running on port ${PORT}`);
 });
 
 export { app, server, prisma };
