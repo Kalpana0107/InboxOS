@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Sparkles, Mail, Lock, AlertCircle, Eye, EyeOff, Loader2, UserCheck } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Eye, EyeOff, Loader2, UserCheck } from 'lucide-react';
 
 export const RegisterForm: React.FC = () => {
   const { register, error: authError, clearError } = useAuth();
