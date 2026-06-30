@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { EmailList } from './components/EmailList';
 import { 
   ShieldAlert, 
   CheckCircle2, 
@@ -57,53 +58,6 @@ const DashboardContent: React.FC = () => {
     { title: 'Average Action Time', value: '1.2m', change: '-12%', isPositive: true, icon: <Clock size={18} /> },
   ];
 
-  const mockEmails = [
-    {
-      id: '1',
-      sender: 'stripe@stripe.com',
-      senderName: 'Stripe Recruiting',
-      subject: 'Interview Scheduled: Technical Intern SWE',
-      summary: 'Invitation for a technical coding interview round. Action required by Friday.',
-      category: 'job',
-      priority: 88,
-      status: 'UNREAD',
-      received: '10m ago'
-    },
-    {
-      id: '2',
-      sender: 'prof.sharma@university.edu',
-      senderName: 'Prof. Sharma (DBMS)',
-      subject: 'DBMS Mini-Project Deadline Reminder',
-      summary: 'Final submission deadline is tonight at 11:59 PM. No late submissions accepted.',
-      category: 'academic',
-      priority: 95,
-      status: 'UNREAD',
-      received: '45m ago'
-    },
-    {
-      id: '3',
-      sender: 'billing@cloudprovider.com',
-      senderName: 'Cloud Infrastructure',
-      subject: 'Invoice #INV-2901: Cloud Computing Resources',
-      summary: 'Invoice details for active node pools. Auto-debit scheduled.',
-      category: 'finance',
-      priority: 72,
-      status: 'READ',
-      received: '2h ago'
-    },
-    {
-      id: '4',
-      sender: 'google-auth@google.com',
-      senderName: 'Google Account Security',
-      subject: 'Verification Code: 894102',
-      summary: '2FA authentication request code. Expires in 10 minutes.',
-      category: 'otp',
-      priority: 98,
-      status: 'UNREAD',
-      received: '3m ago'
-    }
-  ];
-
   const handleComposeAction = () => {
     alert('Compose action triggered (Compose modal will follow in the next steps).');
   };
@@ -146,59 +100,11 @@ const DashboardContent: React.FC = () => {
             <div className="flex justify-between items-center px-2">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                 <Inbox size={16} className="text-indigo-400" />
-                <span>Recent Smart Ingests</span>
+                <span>Smart Inbound Streams</span>
               </h3>
-              <button className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
-                View all emails
-              </button>
             </div>
 
-            <div className="space-y-3.5">
-              {mockEmails.map((email) => (
-                <div 
-                  key={email.id}
-                  className="glass rounded-2xl p-4 border border-white/5 transition-all hover:border-white/10 hover:bg-white/5 cursor-pointer flex gap-4"
-                >
-                  <div className="w-1.5 rounded-full bg-indigo-500 shrink-0" style={{
-                    backgroundColor: 
-                      email.category === 'urgent' || email.priority > 90 ? '#f43f5e' :
-                      email.category === 'job' ? '#a855f7' :
-                      email.category === 'finance' ? '#10b981' :
-                      email.category === 'otp' ? '#f59e0b' : '#6366f1'
-                  }} />
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className="text-xs font-bold text-gray-200 truncate">{email.senderName}</span>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[10px] text-gray-400">{email.received}</span>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-extrabold ${
-                          email.priority > 90 
-                            ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' 
-                            : 'bg-white/5 text-gray-400'
-                        }`}>
-                          Score: {email.priority}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <h4 className="text-xs font-semibold text-gray-100 mb-1 truncate">{email.subject}</h4>
-                    <p className="text-[11px] text-gray-400 leading-normal line-clamp-2">{email.summary}</p>
-                    
-                    <div className="flex items-center gap-2 mt-3">
-                      <span className="text-[9px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-white/5 text-gray-400 border border-white/5">
-                        {email.category}
-                      </span>
-                      {email.status === 'UNREAD' && (
-                        <span className="text-[9px] font-semibold bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20">
-                          Unresolved
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <EmailList />
           </div>
 
           <div className="space-y-6">
