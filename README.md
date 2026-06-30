@@ -437,6 +437,19 @@ npm install
 npm run dev
 ```
 
+#### 4. Telegram Bot Local Webhook Tunnel
+For local testing of bidirectional Telegram bot webhooks:
+```bash
+# 1. Start a local tunnel mapping port 8000
+ngrok http 8000
+
+# 2. Copy the resulting HTTPS forwarding URL (e.g., https://abc-123.ngrok-free.app)
+#    and paste it as TELEGRAM_WEBHOOK_URL in your config/env/.env file.
+
+# 3. Spin up your backend server. Webhooks will automatically register on startup!
+uvicorn main:app --reload
+```
+
 ---
 
 ## 10. Configuration & Environment Variables
