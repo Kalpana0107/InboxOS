@@ -16,7 +16,7 @@
 
 ---
 
-## 📋 Table of Contents 
+## Table of Contents 
 
 1. [Introduction & Problem Statement](#1-introduction--problem-statement)
 2. [Key Features](#2-key-features)
@@ -608,6 +608,3 @@ We welcome contributions to the pipeline connectors and adapters!
 *   [Microsoft Graph SDK Reference](https://learn.microsoft.com/en-us/graph/use-the-api)
 *   [Celery Worker Queue Manual](https://docs.celeryq.dev/en/stable/)
 *   [Ollama Local LLM Quickstart](https://github.com/ollama/ollama)
-
-
-..
