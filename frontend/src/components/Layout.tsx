@@ -30,23 +30,21 @@ export const Layout: React.FC<LayoutProps> = ({
       </aside>
 
       {/* ── Mobile Sidebar Drawer ────────────────────────────────────────────────── */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
-          {/* Backdrop overlay */}
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setIsMobileMenuOpen(false)}
+      <div className={`fixed inset-0 z-50 flex md:hidden transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        {/* Backdrop overlay */}
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+        
+        {/* Mobile drawer container */}
+        <aside className={`relative flex flex-col w-[260px] bg-bg-base border-r border-white/10 h-full p-4 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <SidebarNav 
+            isMobile 
+            onCloseMobileMenu={() => setIsMobileMenuOpen(false)} 
           />
-          
-          {/* Mobile drawer container */}
-          <aside className="relative flex flex-col w-[260px] bg-bg-base border-r border-white/10 h-full p-4 z-50">
-            <SidebarNav 
-              isMobile 
-              onCloseMobileMenu={() => setIsMobileMenuOpen(false)} 
-            />
-          </aside>
-        </div>
-      )}
+        </aside>
+      </div>
 
       {/* ── Main Content Area ────────────────────────────────────────────────────── */}
       <div className="flex flex-col flex-1 min-w-0">
@@ -58,6 +56,7 @@ export const Layout: React.FC<LayoutProps> = ({
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             className="md:hidden p-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
+            aria-label="Open mobile menu"
           >
             <Menu size={20} />
           </button>
@@ -78,12 +77,18 @@ export const Layout: React.FC<LayoutProps> = ({
           <div className="flex items-center gap-4">
             
             {/* Dark Mode toggle visual */}
-            <button className="p-2.5 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-colors">
+            <button 
+              className="p-2.5 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-colors"
+              aria-label="Toggle dark mode"
+            >
               <Moon size={18} />
             </button>
 
             {/* Notification Bell */}
-            <button className="p-2.5 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-colors relative">
+            <button 
+              className="p-2.5 rounded-xl hover:bg-white/5 text-gray-400 hover:text-white transition-colors relative"
+              aria-label="Notifications"
+            >
               <Bell size={18} />
               <span className="absolute top-2 right-2.5 h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
             </button>

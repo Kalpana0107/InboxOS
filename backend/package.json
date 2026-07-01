@@ -50,6 +50,8 @@
     "@types/node": "^20.14.9",
     "oxlint": "^1.72.0",
     "prisma": "^5.16.1",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.11",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.2"
   }
