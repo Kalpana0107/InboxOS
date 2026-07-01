@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { GoogleGenAI } from '@google/genai';
+// @ts-ignore
 import { PrismaClient } from '@prisma/client';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -240,7 +241,7 @@ Provide a confidence score between 0.0 and 1.0.`;
     }
 
     // 2. Concatenate the bodies into a single string
-    const concatenatedBodies = emails.map(email => email.body).join('\n\n');
+    const concatenatedBodies = emails.map((email: any) => email.body).join('\n\n');
 
     // 3. Truncate the concatenated string to a maximum of 8000 tokens (approx 32,000 characters)
     const truncatedText = this.truncateToTokens(concatenatedBodies, 8000);
@@ -711,7 +712,7 @@ If there are no explicit, concrete tasks, return an empty array.`;
       });
 
       const results = emails
-        .map((email) => {
+        .map((email: any) => {
           let dbEmbedding: number[] = [];
           try {
             dbEmbedding = JSON.parse(email.embedding!) as number[];
@@ -725,7 +726,7 @@ If there are no explicit, concrete tasks, return an empty array.`;
             similarity,
           };
         })
-        .sort((a, b) => b.similarity - a.similarity)
+        .sort((a: any, b: any) => b.similarity - a.similarity)
         .slice(0, limit);
 
       return results;
