@@ -51,6 +51,13 @@ describe('GET /api/users/profile', () => {
         id: true,
         email: true,
         createdAt: true,
+        settings: {
+          select: {
+            theme: true,
+            signature: true,
+            autoReply: true,
+          },
+        },
       },
     });
   });

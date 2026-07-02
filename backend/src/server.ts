@@ -886,6 +886,70 @@ app.get(
 );
 
 /**
+ * GET /api/emails/search
+ * Search user's emails by subject or body with pagination.
+ */
+app.get(
+  '/api/emails/search',
+  requireAuth,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { q } = req.query;
+      if (typeof q !== 'string' || !q.trim()) {
+        return res.status(400).json({
+          error: 'Query parameter "q" is required and cannot be empty',
+        });
+      }
+
+      // Parse pagination parameters
+      const limitQuery = parseInt(req.query.limit as string, 10);
+      const offsetQuery = parseInt(req.query.offset as string, 10);
+
+      const limit =
+        isNaN(limitQuery) || limitQuery <= 0 ? 20 : Math.min(limitQuery, 20);
+      const offset = isNaN(offsetQuery) || offsetQuery < 0 ? 0 : offsetQuery;
+
+      // Search query object
+      const searchFilter = {
+        userId,
+        OR: [
+          { subject: { contains: q } },
+          { body: { contains: q } },
+        ],
+      };
+
+      // Run both count and select queries concurrently
+      const [total, emails] = await Promise.all([
+        prisma.email.count({ where: searchFilter as any }),
+        prisma.email.findMany({
+          where: searchFilter as any,
+          take: limit,
+          skip: offset,
+          orderBy: { createdAt: 'desc' },
+        }),
+      ]);
+
+      return res.status(200).json({
+        emails,
+        pagination: {
+          total,
+          limit,
+          offset,
+        },
+      });
+    } catch (error) {
+      console.error('Email search error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+);
+
+/**
  * GET /api/emails/:id
  * Returns a single email with its thread list and action items.
  */
