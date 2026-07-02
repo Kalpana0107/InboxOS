@@ -25,9 +25,9 @@ async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
     # Startup: create database tables
     await create_tables()
-    print(f"✅ InboxOS API started — {settings.APP_ENV} mode")
-    print(f"📬 AI Provider: {settings.AI_PROVIDER}")
-    print(f"🗄️  Database: {settings.DATABASE_URL}")
+    print(f"[OK] InboxOS API started - {settings.APP_ENV} mode")
+    print(f"[AI] AI Provider: {settings.AI_PROVIDER}")
+    print(f"[DB] Database: {settings.DATABASE_URL}")
 
     # Auto-register Telegram Webhook on startup
     if settings.TELEGRAM_BOT_TOKEN and settings.TELEGRAM_WEBHOOK_URL:
@@ -42,13 +42,13 @@ async def lifespan(app: FastAPI):
                     timeout=5.0
                 )
                 res.raise_for_status()
-                print(f"🤖 Telegram Webhook registered: {settings.TELEGRAM_WEBHOOK_URL}")
+                print(f"[Telegram] Telegram Webhook registered: {settings.TELEGRAM_WEBHOOK_URL}")
         except Exception as e:
-            print(f"⚠️ Telegram Webhook auto-registration failed: {str(e)}")
+            print(f"[WARNING] Telegram Webhook auto-registration failed: {str(e)}")
 
     yield
     # Shutdown
-    print("👋 InboxOS API shutting down...")
+    print("[INFO] InboxOS API shutting down...")
 
 
 app = FastAPI(

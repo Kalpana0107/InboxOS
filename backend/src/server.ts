@@ -23,13 +23,6 @@ import { registerWorkerHandlers } from './worker';
 import { Server as SocketIoServer } from 'socket.io';
 import { WebSocketService } from './services/websocket.service';
 
-// If Redis is not running and we fall back to local event emitter, register worker handlers inline.
-EventBus.onFallback(() => {
-  registerWorkerHandlers().catch((err) => {
-    console.error('Failed to register inline worker handlers on EventBus fallback:', err);
-  });
-});
-
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 8000;
@@ -1009,12 +1002,21 @@ app.get('/api/auth/google', (req: Request, res: Response) => {
 
 const server = app.listen(PORT, () => {
   logger.info(`Auth service running on port ${PORT}`);
+  
+  // Register EventBus fallback handler AFTER server is listening
+  // to avoid blocking startup if Redis is slow or unavailable.
+  // This allows graceful degradation while the server remains responsive.
+  EventBus.onFallback(() => {
+    registerWorkerHandlers().catch((err) => {
+      console.error('Failed to register inline worker handlers on EventBus fallback:', err);
+    });
+  });
 });
 
 // Initialize Socket.io Server with client-credentials CORS configuration
 const io = new SocketIoServer(server, {
   cors: {
-    origin: (origin, callback) => {
+    origin: (origin: any, callback: any) => {
       if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
         callback(null, true);
       } else {

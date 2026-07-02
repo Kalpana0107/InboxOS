@@ -397,11 +397,11 @@ cd inboxos
 cp config/env/.env.example config/env/.env
 # Edit config/env/.env with your secrets
 
-# 3. Spin up all services (PostgreSQL, Redis, API Backend, Celery, Frontend Dashboard)
-docker compose -f config/docker/docker-compose.yml up -d
+# 3. Spin up all services (PostgreSQL, Redis, Backend, Frontend)
+docker compose up -d
 
 # 4. Execute database migrations
-docker compose -f config/docker/docker-compose.yml exec api alembic upgrade head
+docker compose exec backend npx prisma db push
 
 # 5. Open the Dashboard UI
 # Access the dashboard at http://localhost:5173
@@ -498,7 +498,7 @@ Create your configuration files inside `config/env/`.
 
 ### Self-Hosted (Single VPS with Nginx)
 For deploying everything on a single virtual private server.
-1. Run `docker compose -f config/docker/docker-compose.yml up -d` on the VPS.
+1. Run `docker compose up -d` on the VPS.
 2. Bind local Nginx to reverse proxy port `8000` (API backend) and port `5173` (Frontend).
 3. Secure the connection with Let's Encrypt SSL certificates:
    ```bash
