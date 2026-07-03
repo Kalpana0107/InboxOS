@@ -702,43 +702,6 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── Trust Strip ────────────────────────────────────────────────────────── */}
-      <section className="py-10 bg-slate-50 border-b border-slate-200/50 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-6">
-            Supported Providers & Output Channels
-          </p>
-
-          {/* Logo marquee loop */}
-          <div className="flex items-center justify-center flex-wrap gap-8 md:gap-12 opacity-60">
-            <span className="font-semibold text-slate-600 text-xs flex items-center gap-1.5">
-              <Inbox size={15} /> Gmail
-            </span>
-            <span className="font-semibold text-slate-600 text-xs flex items-center gap-1.5">
-              <Lock size={15} /> Outlook
-            </span>
-            <span className="font-semibold text-slate-600 text-xs flex items-center gap-1.5">
-              <SlackIcon size={15} /> Slack
-            </span>
-            <span className="font-semibold text-slate-600 text-xs flex items-center gap-1.5">
-              <Smartphone size={15} /> WhatsApp
-            </span>
-            <span className="font-semibold text-slate-600 text-xs flex items-center gap-1.5">
-              <Calendar size={15} /> Google Calendar
-            </span>
-            <span className="font-semibold text-slate-600 text-xs flex items-center gap-1.5">
-              <GithubIcon size={15} /> GitHub Actions
-            </span>
-            <span className="font-semibold text-slate-600 text-xs flex items-center gap-1.5">
-              <Terminal size={15} /> Custom IMAP
-            </span>
-            <span className="font-semibold text-slate-600 text-xs flex items-center gap-1.5">
-              <MessageSquare size={15} /> Telegram
-            </span>
-          </div>
-        </div>
-      </section>
-
       {/* ── Interactive Pipeline Steps Section ─────────────────────────────────── */}
       <section
         id="pipeline"
