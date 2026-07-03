@@ -836,6 +836,116 @@ app.delete(
 );
 
 /**
+ * GET /api/dashboard/stats
+ * Returns live dashboard metrics/statistics for the authenticated user.
+ */
+app.get(
+  '/api/dashboard/stats',
+  requireAuth,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const now = new Date();
+      const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const prev24h = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+
+      // 1. Total Ingested
+      const totalIngested = await prisma.email.count({
+        where: { userId },
+      });
+      const last24hIngested = await prisma.email.count({
+        where: { userId, createdAt: { gte: last24h } },
+      });
+      const prev24hIngested = await prisma.email.count({
+        where: { userId, createdAt: { gte: prev24h, lt: last24h } },
+      });
+      let ingestedChange = 0;
+      if (prev24hIngested > 0) {
+        ingestedChange = Math.round(((last24hIngested - prev24hIngested) / prev24hIngested) * 100);
+      } else if (last24hIngested > 0) {
+        ingestedChange = 100;
+      }
+
+      // 2. Urgent / Pending Actions
+      const pendingActions = await prisma.actionItem.count({
+        where: {
+          isCompleted: false,
+          email: { userId },
+        },
+      });
+      const last24hPending = await prisma.actionItem.count({
+        where: {
+          isCompleted: false,
+          email: { userId },
+          createdAt: { gte: last24h },
+        },
+      });
+      const prev24hPending = await prisma.actionItem.count({
+        where: {
+          isCompleted: false,
+          email: { userId },
+          createdAt: { gte: prev24h, lt: last24h },
+        },
+      });
+      let pendingChange = 0;
+      if (prev24hPending > 0) {
+        pendingChange = Math.round(((last24hPending - prev24hPending) / prev24hPending) * 100);
+      } else if (last24hPending > 0) {
+        pendingChange = 100;
+      }
+
+      // 3. Resolved Rate
+      const totalTasks = await prisma.actionItem.count({
+        where: { email: { userId } },
+      });
+      const completedTasks = await prisma.actionItem.count({
+        where: { isCompleted: true, email: { userId } },
+      });
+      const resolutionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+      // Previous 24h resolution rate to calculate trend
+      const prevTotalTasks = await prisma.actionItem.count({
+        where: { email: { userId }, createdAt: { lt: last24h } },
+      });
+      const prevCompletedTasks = await prisma.actionItem.count({
+        where: { isCompleted: true, email: { userId }, createdAt: { lt: last24h } },
+      });
+      const prevResolutionRate = prevTotalTasks > 0 ? Math.round((prevCompletedTasks / prevTotalTasks) * 100) : 0;
+
+      let resolutionChange = 0;
+      if (prevResolutionRate > 0) {
+        resolutionChange = Math.round(((resolutionRate - prevResolutionRate) / prevResolutionRate) * 100);
+      } else if (resolutionRate > 0) {
+        resolutionChange = 100;
+      }
+
+      return res.status(200).json({
+        totalIngested: {
+          value: totalIngested,
+          change: `${ingestedChange >= 0 ? '+' : ''}${ingestedChange}%`,
+          isPositive: ingestedChange >= 0,
+        },
+        pendingActions: {
+          value: pendingActions,
+          change: `${pendingChange >= 0 ? '+' : ''}${pendingChange}%`,
+          isPositive: pendingChange <= 0, // decrease in pending items is positive
+        },
+        resolutionRate: {
+          value: `${resolutionRate}%`,
+          change: `${resolutionChange >= 0 ? '+' : ''}${resolutionChange}%`,
+          isPositive: resolutionChange >= 0,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to calculate dashboard stats:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+);
+
+/**
  * GET /api/emails
  * Returns paginated email list for the logged-in user.
  * Called by frontend EmailList.tsx

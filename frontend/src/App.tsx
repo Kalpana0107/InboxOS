@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Routes,
   Route,
@@ -81,24 +82,43 @@ const DashboardContent: React.FC = () => {
   const { socket } = useSocket();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const { data: stats, refetch: refetchStats } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/api/dashboard/stats`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch stats');
+      return res.json();
+    },
+    refetchInterval: 10000,
+  });
+
   useEffect(() => {
     if (!socket) return;
 
     socket.on('task.created', (data: any) => {
       setToastMessage(`New Task Extracted: ${data.title}`);
       setTimeout(() => setToastMessage(null), 4000);
+      refetchStats();
     });
 
     socket.on('rule.executed', (data: any) => {
       setToastMessage(`Rule Executed: "${data.ruleName}" (${data.status})`);
       setTimeout(() => setToastMessage(null), 4000);
+      refetchStats();
+    });
+
+    socket.on('email.received', () => {
+      refetchStats();
     });
 
     return () => {
       socket.off('task.created');
       socket.off('rule.executed');
+      socket.off('email.received');
     };
-  }, [socket]);
+  }, [socket, refetchStats]);
 
   const getActiveTab = () => {
     const path = location.pathname;
@@ -198,31 +218,24 @@ const DashboardContent: React.FC = () => {
   const metrics = [
     {
       title: 'Total Ingested',
-      value: '1,284',
-      change: '+12%',
-      isPositive: true,
+      value: stats?.totalIngested?.value ?? '0',
+      change: stats?.totalIngested?.change ?? '0%',
+      isPositive: stats?.totalIngested?.isPositive ?? true,
       icon: <Inbox size={18} />,
     },
     {
       title: 'Urgent Action Required',
-      value: '4',
-      change: '-25%',
-      isPositive: true,
+      value: stats?.pendingActions?.value ?? '0',
+      change: stats?.pendingActions?.change ?? '0%',
+      isPositive: stats?.pendingActions?.isPositive ?? true,
       icon: <ShieldAlert size={18} className="text-amber-400 animate-pulse" />,
     },
     {
       title: 'Auto-resolved / Closed',
-      value: '84%',
-      change: '+3.5%',
-      isPositive: true,
+      value: stats?.resolutionRate?.value ?? '0%',
+      change: stats?.resolutionRate?.change ?? '0%',
+      isPositive: stats?.resolutionRate?.isPositive ?? true,
       icon: <CheckCircle2 size={18} className="text-emerald-400" />,
-    },
-    {
-      title: 'Average Action Time',
-      value: '1.2m',
-      change: '-12%',
-      isPositive: true,
-      icon: <Clock size={18} />,
     },
   ];
 
@@ -773,7 +786,7 @@ const DashboardContent: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {metrics.map((metric, idx) => (
             <MetricCard key={idx} {...metric} />
           ))}
