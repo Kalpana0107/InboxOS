@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as chrono from 'chrono-node';
+import { OllamaProvider } from './ai-providers/ollama.provider';
 
 // Load environment variables from the shared configuration directory
 dotenv.config({ path: path.resolve(__dirname, '../../../config/env/.env') });
@@ -60,6 +61,13 @@ export class AIService {
 
     if (provider === 'gemini') {
       result = await this.classifyWithGemini(subject, body);
+    } else if (provider === 'ollama') {
+      try {
+        result = await OllamaProvider.classify(subject, body);
+      } catch (error) {
+        console.warn(`[AIService] Ollama classification failed or unreachable. Falling back to OpenAI. Error:`, error);
+        result = await this.classifyWithOpenAI(subject, body);
+      }
     } else {
       result = await this.classifyWithOpenAI(subject, body);
     }
@@ -285,6 +293,13 @@ Provide a confidence score between 0.0 and 1.0. Also, extract all deadlines ment
 
     if (provider === 'gemini') {
       summary = await this.summarizeWithGemini(truncatedText);
+    } else if (provider === 'ollama') {
+      try {
+        summary = await OllamaProvider.generateSummary([truncatedText]);
+      } catch (error) {
+        console.warn(`[AIService] Ollama thread summarization failed or unreachable. Falling back to OpenAI. Error:`, error);
+        summary = await this.summarizeWithOpenAI(truncatedText);
+      }
     } else {
       summary = await this.summarizeWithOpenAI(truncatedText);
     }
@@ -413,6 +428,13 @@ Provide a confidence score between 0.0 and 1.0. Also, extract all deadlines ment
 
     if (provider === 'gemini') {
       items = await this.extractActionItemsWithGemini(subject, body);
+    } else if (provider === 'ollama') {
+      try {
+        items = await OllamaProvider.extractActionItems(subject, body);
+      } catch (error) {
+        console.warn(`[AIService] Ollama action items extraction failed or unreachable. Falling back to OpenAI. Error:`, error);
+        items = await this.extractActionItemsWithOpenAI(subject, body);
+      }
     } else {
       items = await this.extractActionItemsWithOpenAI(subject, body);
     }
