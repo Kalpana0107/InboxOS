@@ -1297,7 +1297,9 @@ Do NOT infer or fabricate deadlines. Only return dates explicitly stated.`;
 
         const rawContent = response.choices[0]?.message?.content;
         if (!rawContent) {
-          throw new Error('OpenAI returned an empty deadline extraction response.');
+          throw new Error(
+            'OpenAI returned an empty deadline extraction response.'
+          );
         }
         const result = JSON.parse(rawContent) as { deadlines: string[] };
         return result.deadlines || [];
@@ -1313,7 +1315,10 @@ Do NOT infer or fabricate deadlines. Only return dates explicitly stated.`;
           await new Promise((resolve) => setTimeout(resolve, delay));
           delay *= 2;
         } else {
-          console.error('[AIService] Deadline extraction (OpenAI) failed:', error);
+          console.error(
+            '[AIService] Deadline extraction (OpenAI) failed:',
+            error
+          );
           if (attempt >= maxAttempts) return [];
           throw error;
         }
@@ -1364,7 +1369,9 @@ Do NOT infer or fabricate deadlines. Only return dates explicitly stated.`;
 
         const rawContent = response.text;
         if (!rawContent) {
-          throw new Error('Gemini returned an empty deadline extraction response.');
+          throw new Error(
+            'Gemini returned an empty deadline extraction response.'
+          );
         }
         const result = JSON.parse(rawContent) as { deadlines: string[] };
         return result.deadlines || [];
@@ -1383,7 +1390,10 @@ Do NOT infer or fabricate deadlines. Only return dates explicitly stated.`;
           await new Promise((resolve) => setTimeout(resolve, delay));
           delay *= 2;
         } else {
-          console.error('[AIService] Deadline extraction (Gemini) failed:', error);
+          console.error(
+            '[AIService] Deadline extraction (Gemini) failed:',
+            error
+          );
           if (attempt >= maxAttempts) return [];
           throw error;
         }
