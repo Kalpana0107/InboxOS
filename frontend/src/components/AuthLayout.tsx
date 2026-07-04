@@ -254,37 +254,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
           </div>
         </div>
 
-        {/* Footer Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-white/[0.04] pt-8 mt-12 text-left">
-          <div>
-            <p className="text-2xl font-black text-white tracking-tight">98%</p>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">
-              Classification Rate
-            </p>
-          </div>
-          <div>
-            <p className="text-2xl font-black text-white tracking-tight">
-              1,000+
-            </p>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">
-              Emails Processed
-            </p>
-          </div>
-          <div>
-            <p className="text-2xl font-black text-white tracking-tight">6+</p>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">
-              Output Integrations
-            </p>
-          </div>
-          <div>
-            <p className="text-2xl font-black text-white tracking-tight">
-              &lt;60s
-            </p>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500 mt-0.5">
-              Alert Response Time
-            </p>
-          </div>
-        </div>
+
       </div>
 
       {/* ── Right Authentication Panel (40% Width on Desktop) ─────────────────── */}
