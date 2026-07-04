@@ -20,7 +20,6 @@ async function runTest() {
     createdAt: new Date(),
     userId: 'user-id-abc',
     threadId: 'thread-id-xyz',
-    embedding: null,
   };
 
   const mockSummary =

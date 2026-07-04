@@ -29,6 +29,9 @@ import { TelegramBotService } from './services/telegram-bot.service';
 import { TelegramNotificationService } from './services/telegram-notification.service';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { CalendarExtractorService } from './services/actions/calendar-extractor.service';
+import { CalendarCreatorService } from './services/actions/calendar-creator.service';
+import { calendarEventsQueue } from './jobs/calendar-events.job';
 
 const app = express();
 
@@ -791,8 +794,238 @@ app.get(
         .status(200)
         .json({ message: 'Gmail connected successfully', emailAddress });
     } catch (error) {
-      console.error('OAuth callback error:', error);
       return res.status(500).json({ error: 'OAuth integration failed' });
+    }
+  }
+);
+
+/**
+ * GET /api/integrations/google_calendar/status
+ * Check if the user has connected Google Calendar.
+ */
+app.get(
+  '/api/integrations/google_calendar/status',
+  requireAuth,
+  async (req: AuthenticatedRequest, res: Response) => {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    try {
+      const integration = await prisma.integration.findUnique({
+        where: {
+          userId_provider: {
+            userId,
+            provider: 'google_calendar',
+          },
+        },
+      });
+      return res.json({ connected: !!integration });
+    } catch (error) {
+      console.error('Error fetching calendar status:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+);
+
+/**
+ * GET /api/integrations/google_calendar/auth
+ * Generates the Google Calendar OAuth URL.
+ */
+app.get(
+  '/api/integrations/google_calendar/auth',
+  requireAuth,
+  (req: AuthenticatedRequest, res: Response) => {
+    const redirectUri = (process.env.GMAIL_REDIRECT_URI || 'http://localhost:8000/api/integrations/gmail/callback')
+      .replace('/gmail/callback', '/google_calendar/callback');
+
+    const calendarOauth2Client = new google.auth.OAuth2(
+      process.env.GMAIL_CLIENT_ID,
+      process.env.GMAIL_CLIENT_SECRET,
+      redirectUri
+    );
+
+    const url = calendarOauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/calendar',
+        'https://www.googleapis.com/auth/calendar.events'
+      ],
+      prompt: 'consent',
+      state: req.user?.userId,
+    });
+    return res.json({ url });
+  }
+);
+
+/**
+ * GET /api/integrations/google_calendar/callback
+ * Exchanges the auth code for tokens and saves them to Prisma securely.
+ */
+app.get(
+  '/api/integrations/google_calendar/callback',
+  async (req: Request, res: Response) => {
+    const code = req.query.code as string;
+    const userId = req.query.state as string;
+
+    if (!code || !userId) {
+      return res
+        .status(400)
+        .json({ error: 'Missing code or state parameters' });
+    }
+
+    try {
+      const calendarOauth2Client = new google.auth.OAuth2(
+        process.env.GMAIL_CLIENT_ID,
+        process.env.GMAIL_CLIENT_SECRET,
+        (process.env.GMAIL_REDIRECT_URI || 'http://localhost:8000/api/integrations/gmail/callback')
+          .replace('/gmail/callback', '/google_calendar/callback')
+      );
+
+      const { tokens } = await calendarOauth2Client.getToken(code);
+      const encryptedTokens = encrypt(JSON.stringify(tokens));
+
+      await prisma.integration.upsert({
+        where: {
+          userId_provider: {
+            userId,
+            provider: 'google_calendar',
+          },
+        },
+        update: {
+          encryptedTokens,
+          updatedAt: new Date(),
+        },
+        create: {
+          userId,
+          provider: 'google_calendar',
+          encryptedTokens,
+        },
+      });
+
+      // Redirect back to frontend
+      return res.redirect('http://localhost:5173/');
+    } catch (error) {
+      console.error('Calendar OAuth callback error:', error);
+      return res.status(500).json({ error: 'OAuth integration failed' });
+    }
+  }
+);
+
+/**
+ * POST /api/actions/calendar/events
+ * Triggers extracting meeting details from email and creating a calendar event.
+ */
+app.post(
+  '/api/actions/calendar/events',
+  requireAuth,
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { emailId } = req.body;
+    const userId = req.user?.userId;
+
+    if (!emailId || !userId) {
+      return res.status(400).json({ error: 'Missing emailId or userId' });
+    }
+
+    try {
+      // 1. Fetch Email
+      const email = await prisma.email.findUnique({
+        where: { id: emailId },
+        include: { analysis: true },
+      });
+
+      if (!email) {
+        return res.status(404).json({ error: 'Email not found' });
+      }
+
+      // 2. Extract Event Details
+      const eventData = CalendarExtractorService.extractEventDetails(email.analysis || email);
+      if (!eventData) {
+        return res.status(400).json({ error: 'No meeting details could be extracted from this email' });
+      }
+
+      // 3. Attempt creation
+      try {
+        const savedEvent = await CalendarCreatorService.createGoogleCalendarEvent(eventData, userId, emailId);
+        return res.status(201).json({ success: true, event: savedEvent });
+      } catch (err: any) {
+        if (err.message === 'MISSING_GOOGLE_CALENDAR_CREDENTIALS') {
+          logger.info(`[CalendarRoute] Missing credentials. Queueing calendar event creation for email: ${emailId}`);
+          
+          // Save a placeholder event with 'pending' status in db
+          const pendingEvent = await prisma.calendarEvent.upsert({
+            where: {
+              googleEventId: 'failed_' + emailId,
+            },
+            update: {
+              status: 'pending',
+            },
+            create: {
+              userId,
+              emailId,
+              title: eventData.title,
+              startTime: eventData.startTime,
+              endTime: eventData.endTime,
+              location: eventData.location,
+              attendees: eventData.attendees,
+              meetingLink: eventData.meetingLink,
+              googleEventId: 'failed_' + emailId,
+              status: 'pending',
+            },
+          });
+
+          await calendarEventsQueue.add('createEvent', {
+            userId,
+            emailId,
+            eventData,
+          }, {
+            attempts: 5,
+            backoff: {
+              type: 'exponential',
+              delay: 5000,
+            },
+          });
+
+          return res.status(202).json({
+            success: true,
+            message: 'Google Calendar credentials missing. Retrying creation in background.',
+            event: pendingEvent,
+          });
+        }
+        throw err;
+      }
+    } catch (error: any) {
+      console.error('Error creating calendar event:', error);
+      return res.status(500).json({ error: error.message || 'Internal Server Error' });
+    }
+  }
+);
+
+/**
+ * GET /api/actions/calendar/events/:emailId
+ * Retrieves calendar events associated with an email.
+ */
+app.get(
+  '/api/actions/calendar/events/:emailId',
+  requireAuth,
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { emailId } = req.params;
+    const userId = req.user?.userId;
+
+    if (!emailId || !userId) {
+      return res.status(400).json({ error: 'Missing emailId or userId' });
+    }
+
+    try {
+      const events = await prisma.calendarEvent.findMany({
+        where: {
+          emailId: emailId as string,
+          userId: userId as string,
+        },
+      });
+      return res.json(events);
+    } catch (error) {
+      console.error('Error fetching calendar events:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 );

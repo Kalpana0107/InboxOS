@@ -2,6 +2,7 @@ import { EventBus } from './services/event-bus.service';
 import { PrismaClient } from '@prisma/client';
 import { AIService } from './services/ai.service';
 import { indexEmailsWorker } from './jobs/index-emails.job';
+import { calendarEventsWorker } from './jobs/calendar-events.job';
 import { logger } from './utils/logger';
 import { emailsProcessedCounter } from './utils/metrics';
 import { RulesEngineService } from './services/rules-engine.service';
@@ -20,6 +21,13 @@ indexEmailsWorker.on('completed', (job) => {
 });
 indexEmailsWorker.on('failed', (job, err) => {
   console.error(`[BullMQ] Job ${job?.id} failed with error:`, err);
+});
+
+calendarEventsWorker.on('completed', (job) => {
+  console.log(`[BullMQ] Calendar Event Job ${job.id} completed successfully.`);
+});
+calendarEventsWorker.on('failed', (job, err) => {
+  console.error(`[BullMQ] Calendar Event Job ${job?.id} failed with error:`, err);
 });
 
 export async function registerWorkerHandlers() {

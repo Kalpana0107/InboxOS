@@ -204,6 +204,71 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
   const email =
     data || DETAILED_MOCK_EMAILS[emailId] || DETAILED_MOCK_EMAILS['e1'];
 
+  // Google Calendar Integration hooks
+  const { data: calendarStatus } = useQuery<{ connected: boolean }>({
+    queryKey: ['calendar-status'],
+    queryFn: async () => {
+      const response = await fetch(`${API_BASE}/api/integrations/google_calendar/status`, {
+        credentials: 'include',
+      });
+      if (!response.ok) return { connected: false };
+      return response.json();
+    },
+  });
+
+  const { data: calendarEvents, refetch: refetchEvents } = useQuery<any[]>({
+    queryKey: ['email-calendar-events', emailId],
+    queryFn: async () => {
+      const response = await fetch(`${API_BASE}/api/actions/calendar/events/${emailId}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  const [syncingCalendar, setSyncingCalendar] = useState(false);
+  
+  const triggerCalendarSync = async () => {
+    setSyncingCalendar(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/actions/calendar/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emailId }),
+        credentials: 'include',
+      });
+      if (response.ok) {
+        refetchEvents();
+      } else {
+        const err = await response.json();
+        alert(err.error || 'Failed to sync calendar event');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Network error triggering calendar sync');
+    } finally {
+      setSyncingCalendar(false);
+    }
+  };
+
+  const connectCalendar = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/integrations/google_calendar/auth`, {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const { url } = await response.json();
+        window.location.href = url;
+      } else {
+        alert('Failed to initialize Google Calendar authentication');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error connecting to calendar authentication endpoint');
+    }
+  };
+
   // Handle checked action items local toggle
   const toggleAction = (idx: number) => {
     setCheckedActions((prev) => ({
@@ -521,6 +586,92 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
                   );
                 })}
               </div>
+            </div>
+
+            {/* Upcoming Meetings Section */}
+            <div className="space-y-2.5 border-t border-white/5 pt-4">
+              <div className="flex items-center justify-between">
+                <h4 className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <Calendar size={12} className="text-indigo-400" />
+                  <span>Upcoming Meetings</span>
+                </h4>
+                {calendarStatus?.connected && (
+                  <button
+                    onClick={triggerCalendarSync}
+                    disabled={syncingCalendar}
+                    className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {syncingCalendar ? 'Syncing...' : 'Extract & Sync'}
+                  </button>
+                )}
+              </div>
+
+              {!calendarStatus?.connected ? (
+                <div className="glass-panel p-3.5 rounded-2xl border border-rose-500/20 bg-rose-500/[0.02] space-y-2 text-center">
+                  <p className="text-[11px] text-rose-300 leading-normal">
+                    Google Calendar is not linked. Connect to sync meetings.
+                  </p>
+                  <button
+                    onClick={connectCalendar}
+                    className="w-full py-1.5 text-[10px] font-bold rounded-lg bg-rose-500 hover:bg-rose-600 text-white transition-colors"
+                  >
+                    Link Google Calendar
+                  </button>
+                </div>
+              ) : calendarEvents && calendarEvents.length > 0 ? (
+                <div className="space-y-2">
+                  {calendarEvents.map((evt, idx) => {
+                    const isPending = evt.status === 'pending';
+                    const isFailed = evt.status === 'failed';
+                    return (
+                      <div key={idx} className="glass-panel p-3 rounded-xl border border-white/5 space-y-2 bg-indigo-500/[0.01]">
+                        <div className="flex justify-between items-start gap-2">
+                          <p className="text-xs font-semibold text-white leading-normal truncate">{evt.title}</p>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${
+                            isPending ? 'bg-amber-400/10 text-amber-400 border border-amber-400/20' :
+                            isFailed ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' :
+                            'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          }`}>
+                            {isPending ? 'Sync Pending' : isFailed ? 'Failed' : 'Synced'}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-gray-400 space-y-1">
+                          <p className="flex items-center gap-1.5">
+                            <Clock size={10} className="shrink-0" />
+                            <span>{new Date(evt.startTime).toLocaleString()}</span>
+                          </p>
+                          {evt.location && (
+                            <p className="truncate text-left">📍 {evt.location}</p>
+                          )}
+                        </div>
+                        {evt.meetingLink && (
+                          <a
+                            href={evt.meetingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex w-full justify-center items-center py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold transition-colors"
+                          >
+                            Join Meeting Link
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="glass-panel p-3.5 rounded-2xl border border-white/5 text-center bg-white/[0.01]">
+                  <p className="text-[11px] text-gray-400 leading-normal mb-2">
+                    No calendar events extracted for this email yet.
+                  </p>
+                  <button
+                    onClick={triggerCalendarSync}
+                    disabled={syncingCalendar}
+                    className="py-1.5 px-4 text-[10px] font-bold rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition-colors disabled:opacity-50"
+                  >
+                    {syncingCalendar ? 'Extracting...' : 'Extract & Create'}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Reply Assist Draft suggestion */}
