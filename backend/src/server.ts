@@ -4,7 +4,9 @@ import * as path from 'path';
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
@@ -13,7 +15,10 @@ import {
   requireAuth,
   AuthenticatedRequest,
 } from './middleware/auth.middleware';
-import { rateLimiter } from './middleware/rate-limiter.middleware';
+import {
+  rateLimiter,
+  globalIpRateLimiter,
+} from './middleware/rate-limiter.middleware';
 import client from './utils/metrics';
 import { logger } from './utils/logger';
 import { EventBus } from './services/event-bus.service';
@@ -29,6 +34,7 @@ import { TelegramBotService } from './services/telegram-bot.service';
 import { TelegramNotificationService } from './services/telegram-notification.service';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { schemas, sanitizeHtml, sanitizeString } from './utils/validation';
 
 const app = express();
 
@@ -54,32 +60,82 @@ if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && proc
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 8000;
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (
-    origin &&
-    (origin === 'http://localhost' ||
-      origin.startsWith('http://localhost:') ||
-      origin === 'http://127.0.0.1' ||
-      origin.startsWith('http://127.0.0.1:'))
-  ) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader(
-    'Access-Control-Allow-Methods',
-    'GET,PUT,POST,DELETE,OPTIONS,PATCH'
-  );
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-  );
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
+// Trust the first reverse proxy in production so req.ip cannot be spoofed with
+// an arbitrary X-Forwarded-For value.
+app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
+
+// Configure Helmet middleware for HTTP security headers
+app.use(
+  helmet({
+    hsts: {
+      maxAge: 31536000, // 1 year in seconds
+      includeSubDomains: true,
+      preload: true,
+    },
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'", 'https://accounts.google.com'],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      },
+    },
+    xFrameOptions: { action: 'deny' },
+    xContentTypeOptions: true,
+    referrerPolicy: { policy: 'no-referrer' },
+    hidePoweredBy: true,
+  })
+);
+
+// Configure CORS middleware with environment-specific allowed origins
+const allowedOrigins =
+  process.env.NODE_ENV === 'production'
+    ? process.env.ALLOWED_ORIGINS?.split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean) || []
+    : [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:3000',
+      ];
+
+type CorsError = Error & { code: 'CORS_NOT_ALLOWED' };
+
+const corsOrigin = (
+  origin: string | undefined,
+  callback: (error: Error | null, allowed?: boolean) => void
+) => {
+  // Requests without an Origin header include server-to-server and CLI clients.
+  if (!origin || allowedOrigins.includes(origin)) {
+    callback(null, true);
     return;
   }
-  next();
-});
+
+  logger.warn('CORS origin rejected', {
+    ip: 'unknown',
+    path: 'cors',
+    method: 'OPTIONS',
+    origin,
+  });
+  const error = new Error('Not allowed by CORS') as CorsError;
+  error.code = 'CORS_NOT_ALLOWED';
+  callback(error);
+};
+
+app.use(
+  cors({
+    origin: corsOrigin,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  })
+);
 
 app.get('/metrics', async (req: Request, res: Response) => {
   const ip = req.ip || req.socket.remoteAddress || '';
@@ -117,8 +173,22 @@ app.get('/metrics', async (req: Request, res: Response) => {
   }
 });
 
-app.use(express.json());
+// Configure body parser size limits (10MB)
+const MAX_REQUEST_SIZE = '10mb';
+app.use(express.json({ limit: MAX_REQUEST_SIZE }));
+app.use(express.urlencoded({ extended: true, limit: MAX_REQUEST_SIZE }));
 app.use(cookieParser());
+
+// Apply global IP-based rate limiting to all /api routes except health check
+app.use('/api', (req, res, next) => {
+  if (req.path === '/health') {
+    return next();
+  }
+  return globalIpRateLimiter(req, res, next);
+});
+
+// Apply auth-based rate limiting to all /api routes
+app.use('/api', rateLimiter);
 
 /**
  * GET /api/health
@@ -143,13 +213,26 @@ app.get('/api/health', async (req: Request, res: Response) => {
  * POST /api/auth/register
  * Creates a new user in the database.
  */
+const registerSchema = z.object({
+  email: schemas.email,
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(100),
+});
+
 app.post('/api/auth/register', async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    // Validate request body
+    const validation = registerSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        error: 'Invalid payload schema',
+        details: validation.error.flatten(),
+      });
     }
+
+    const { email, password } = validation.data;
 
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
@@ -202,13 +285,23 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
  * POST /api/auth/login
  * Validates credentials and sets an HTTP-only JWT cookie.
  */
+const loginSchema = z.object({
+  email: schemas.email,
+  password: z.string().min(1, 'Password is required'),
+});
+
 app.post('/api/auth/login', async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    // Validate request body
+    const validation = loginSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({
+        error: 'Invalid payload schema',
+        details: validation.error.flatten(),
+      });
     }
+
+    const { email, password } = validation.data;
 
     // Fetch user
     const user = await prisma.user.findUnique({
@@ -434,11 +527,11 @@ app.get(
  * validates body structures via Zod, and creates records in PostgreSQL.
  */
 const incomingEmailSchema = z.object({
-  sender: z.string().email(),
-  recipient: z.string().email(),
-  subject: z.string(),
-  body: z.string(),
-  messageId: z.string(),
+  sender: schemas.email,
+  recipient: schemas.email,
+  subject: schemas.subject,
+  body: schemas.body.transform(sanitizeHtml),
+  messageId: schemas.messageId,
   inReplyTo: z.string().optional(),
 });
 
@@ -545,8 +638,16 @@ app.post('/api/telegram/webhook', async (req: Request, res: Response) => {
   }
 
   try {
+    const update = z
+      .object({ update_id: z.number().int().nonnegative() })
+      .passthrough()
+      .safeParse(req.body);
+    if (!update.success) {
+      return res.status(400).json({ error: 'Invalid Telegram update' });
+    }
+
     // Process update asynchronously to respond immediately to Telegram
-    TelegramBotService.handleUpdate(req.body).catch((e) => {
+    TelegramBotService.handleUpdate(update.data).catch((e) => {
       logger.error('[TelegramBot] Async handleUpdate error:', e);
     });
     return res.status(200).json({ ok: true });
@@ -599,8 +700,8 @@ app.get(
  * Updates (or initializes) user-specific preferences, validating parameters via Zod.
  */
 const updateSettingsSchema = z.object({
-  theme: z.string().min(1).optional(),
-  signature: z.string().nullable().optional(),
+  theme: z.string().min(1).max(50).transform(sanitizeString).optional(),
+  signature: z.string().max(5000).transform(sanitizeHtml).nullable().optional(),
   autoReply: z.boolean().optional(),
 });
 
@@ -690,14 +791,25 @@ app.get(
     const code = req.query.code as string;
     const userId = req.query.state as string;
 
+    // Validate required parameters
     if (!code || !userId) {
       return res
         .status(400)
         .json({ error: 'Missing code or state parameters' });
     }
 
+    // Sanitize inputs to prevent injection
+    const sanitizedCode = sanitizeString(code);
+    const sanitizedUserId = sanitizeString(userId);
+
+    if (sanitizedCode.length === 0 || sanitizedUserId.length === 0) {
+      return res
+        .status(400)
+        .json({ error: 'Invalid code or state parameters' });
+    }
+
     try {
-      const { tokens } = await oauth2Client.getToken(code);
+      const { tokens } = await oauth2Client.getToken(sanitizedCode);
       oauth2Client.setCredentials(tokens);
 
       const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
@@ -710,17 +822,25 @@ app.get(
           .json({ error: 'Could not fetch email address from Google' });
       }
 
+      // Validate email address format
+      const emailValidation = schemas.email.safeParse(emailAddress);
+      if (!emailValidation.success) {
+        return res
+          .status(400)
+          .json({ error: 'Invalid email address from Google' });
+      }
+
       // ── Google Sign-In flow ───────────────────────────────────────────────────
       // If state is 'google-signin', auto-create or find the user by Gmail address
       // then set a JWT cookie and redirect to the dashboard.
-      if (userId === 'google-signin') {
+      if (sanitizedUserId === 'google-signin') {
         let user = await prisma.user.findUnique({
-          where: { email: emailAddress },
+          where: { email: emailValidation.data },
         });
         if (!user) {
           user = await prisma.user.create({
             data: {
-              email: emailAddress,
+              email: emailValidation.data,
               passwordHash: crypto.randomBytes(32).toString('hex'), // unusable password — Google is the auth
             },
           });
@@ -741,7 +861,7 @@ app.get(
             userId_provider_emailAddress: {
               userId: user.id,
               provider: 'gmail',
-              emailAddress,
+              emailAddress: emailValidation.data,
             },
           },
           update: {
@@ -752,7 +872,7 @@ app.get(
           create: {
             userId: user.id,
             provider: 'gmail',
-            emailAddress,
+            emailAddress: emailValidation.data,
             encryptedTokens,
             syncState: 'connected',
           },
@@ -762,15 +882,21 @@ app.get(
       }
 
       // ── Connect Gmail to existing account flow ────────────────────────────────
+      // Validate userId is a valid UUID
+      const userIdValidation = schemas.uuid.safeParse(sanitizedUserId);
+      if (!userIdValidation.success) {
+        return res.status(400).json({ error: 'Invalid user ID format' });
+      }
+
       const encryptedTokens = encrypt(JSON.stringify(tokens));
 
       // Save to Database
       await prisma.emailAccount.upsert({
         where: {
           userId_provider_emailAddress: {
-            userId,
+            userId: userIdValidation.data,
             provider: 'gmail',
-            emailAddress,
+            emailAddress: emailValidation.data,
           },
         },
         update: {
@@ -779,17 +905,18 @@ app.get(
           lastSyncAt: new Date(),
         },
         create: {
-          userId,
+          userId: userIdValidation.data,
           provider: 'gmail',
-          emailAddress,
+          emailAddress: emailValidation.data,
           encryptedTokens,
           syncState: 'connected',
         },
       });
 
-      return res
-        .status(200)
-        .json({ message: 'Gmail connected successfully', emailAddress });
+      return res.status(200).json({
+        message: 'Gmail connected successfully',
+        emailAddress: emailValidation.data,
+      });
     } catch (error) {
       console.error('OAuth callback error:', error);
       return res.status(500).json({ error: 'OAuth integration failed' });
@@ -801,18 +928,32 @@ app.get(
  * POST /api/emails/send
  * Sends an outbound email via SMTP
  */
+const sendEmailSchema = z.object({
+  to: schemas.email,
+  subject: schemas.subject,
+  text: schemas.body.pipe(z.string().min(1)),
+  html: schemas.body.transform(sanitizeHtml).optional(),
+  inReplyTo: z.string().optional(),
+});
+
 app.post(
   '/api/emails/send',
   requireAuth,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { to, subject, text, html, inReplyTo } = req.body;
-      if (!to || !subject || !text) {
-        return res.status(400).json({ error: 'Missing to, subject, or text' });
-      }
-
       const userId = req.user?.userId;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      // Validate request body
+      const validation = sendEmailSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({
+          error: 'Invalid payload schema',
+          details: validation.error.flatten(),
+        });
+      }
+
+      const { to, subject, text, html, inReplyTo } = validation.data;
 
       const result = await EmailSenderService.send(userId, {
         to,
@@ -835,16 +976,42 @@ app.post(
 /**
  * Webhook Config Routes
  */
+
+/**
+ * Webhook configuration schema with URL validation
+ */
+const webhookConfigSchema = z.object({
+  targetUrl: schemas.url,
+  events: z.array(z.string()).min(1),
+});
+
+const webhookUpdateSchema = z
+  .object({
+    targetUrl: schemas.url.optional(),
+    events: z.array(z.string()).min(1).optional(),
+  })
+  .refine((data) => data.targetUrl !== undefined || data.events !== undefined, {
+    message: 'At least one field (targetUrl or events) must be provided',
+  });
+
 app.post(
   '/api/webhooks/config',
   requireAuth,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { targetUrl, events } = req.body;
       const userId = req.user?.userId;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-      if (!targetUrl || !Array.isArray(events))
-        return res.status(400).json({ error: 'Invalid payload' });
+
+      // Validate request body
+      const validation = webhookConfigSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({
+          error: 'Invalid payload schema',
+          details: validation.error.flatten(),
+        });
+      }
+
+      const { targetUrl, events } = validation.data;
 
       const secret = crypto.randomBytes(32).toString('hex');
       const hook = await prisma.webhookEndpoint.create({
@@ -893,15 +1060,37 @@ app.patch(
     try {
       const userId = req.user?.userId;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-      const { targetUrl, events } = req.body;
+
       const id = req.params.id as string;
 
-      const hook = await prisma.webhookEndpoint.findUnique({ where: { id } });
+      // Validate UUID format
+      const idValidation = schemas.uuid.safeParse(id);
+      if (!idValidation.success) {
+        return res.status(400).json({
+          error: 'Invalid webhook ID format',
+          details: idValidation.error.flatten(),
+        });
+      }
+
+      // Validate request body
+      const validation = webhookUpdateSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({
+          error: 'Invalid payload schema',
+          details: validation.error.flatten(),
+        });
+      }
+
+      const { targetUrl, events } = validation.data;
+
+      const hook = await prisma.webhookEndpoint.findUnique({
+        where: { id: idValidation.data },
+      });
       if (!hook || hook.userId !== userId)
         return res.status(404).json({ error: 'Not found' });
 
       await prisma.webhookEndpoint.update({
-        where: { id },
+        where: { id: idValidation.data },
         data: {
           ...(targetUrl && { targetUrl }),
           ...(events && { events: JSON.stringify(events) }),
@@ -921,13 +1110,25 @@ app.delete(
     try {
       const userId = req.user?.userId;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
       const id = req.params.id as string;
 
-      const hook = await prisma.webhookEndpoint.findUnique({ where: { id } });
+      // Validate UUID format
+      const validation = schemas.uuid.safeParse(id);
+      if (!validation.success) {
+        return res.status(400).json({
+          error: 'Invalid webhook ID format',
+          details: validation.error.flatten(),
+        });
+      }
+
+      const hook = await prisma.webhookEndpoint.findUnique({
+        where: { id: validation.data },
+      });
       if (!hook || hook.userId !== userId)
         return res.status(404).json({ error: 'Not found' });
 
-      await prisma.webhookEndpoint.delete({ where: { id } });
+      await prisma.webhookEndpoint.delete({ where: { id: validation.data } });
       return res.json({ message: 'Webhook deleted' });
     } catch (err) {
       return res.status(500).json({ error: 'Failed to delete webhook' });
@@ -1058,12 +1259,29 @@ app.get(
       const userId = req.user?.userId;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-      const limit = parseInt(req.query.limit as string) || 10;
-      const offset = parseInt(req.query.offset as string) || 0;
+      // Validate and sanitize query parameters
+      const limitQuery = parseInt(req.query.limit as string, 10);
+      const offsetQuery = parseInt(req.query.offset as string, 10);
       const category = req.query.category as string | undefined;
+      let validatedCategory: string | undefined;
+
+      // Apply safe defaults and limits
+      const limit =
+        isNaN(limitQuery) || limitQuery <= 0 ? 10 : Math.min(limitQuery, 100);
+      const offset = isNaN(offsetQuery) || offsetQuery < 0 ? 0 : offsetQuery;
+
+      // Validate category if provided
+      if (category && category !== 'all') {
+        validatedCategory = sanitizeString(category);
+        if (validatedCategory.length === 0) {
+          return res.status(400).json({
+            error: 'Invalid category parameter',
+          });
+        }
+      }
 
       const where: any = { userId };
-      if (category && category !== 'all') where.category = category;
+      if (validatedCategory) where.category = validatedCategory;
 
       const [emails, total] = await Promise.all([
         prisma.email.findMany({
@@ -1116,6 +1334,14 @@ app.get(
         });
       }
 
+      // Sanitize search query to prevent injection attacks
+      const sanitizedQuery = sanitizeString(q);
+      if (sanitizedQuery.length === 0) {
+        return res.status(400).json({
+          error: 'Query parameter contains invalid characters',
+        });
+      }
+
       // Parse pagination parameters
       const limitQuery = parseInt(req.query.limit as string, 10);
       const offsetQuery = parseInt(req.query.offset as string, 10);
@@ -1124,12 +1350,12 @@ app.get(
         isNaN(limitQuery) || limitQuery <= 0 ? 20 : Math.min(limitQuery, 20);
       const offset = isNaN(offsetQuery) || offsetQuery < 0 ? 0 : offsetQuery;
 
-      // Search query object
+      // Search query object with sanitized input
       const searchFilter = {
         userId,
         OR: [
-          { subject: { contains: q } },
-          { body: { contains: q } },
+          { subject: { contains: sanitizedQuery } },
+          { body: { contains: sanitizedQuery } },
         ],
       };
 
@@ -1172,14 +1398,18 @@ app.get(
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const id = req.params.id as string;
-      const uuidRegex =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(id)) {
-        return res.status(400).json({ error: 'Invalid email ID format' });
+
+      // Validate UUID format using Zod schema
+      const validation = schemas.uuid.safeParse(id);
+      if (!validation.success) {
+        return res.status(400).json({
+          error: 'Invalid email ID format',
+          details: validation.error.flatten(),
+        });
       }
 
       const email = await prisma.email.findUnique({
-        where: { id },
+        where: { id: validation.data },
         include: {
           actionItems: true,
           thread: {
@@ -1230,7 +1460,7 @@ const ruleConditionSchema = z.object({
     'lt',
     'in',
   ]),
-  value: z.string(),
+  value: z.string().max(1000).transform(sanitizeString),
 });
 
 const ruleActionSchema = z.object({
@@ -1248,8 +1478,8 @@ const ruleActionSchema = z.object({
 });
 
 const createRuleSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
+  name: z.string().min(1).max(200).transform(sanitizeString),
+  description: z.string().max(1000).transform(sanitizeString).optional(),
   priority: z.number().int().default(0),
   conditions: z.array(ruleConditionSchema).min(1),
   actions: z.array(ruleActionSchema).min(1),
@@ -1347,8 +1577,18 @@ app.get(
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const id = req.params.id as string;
+
+      // Validate UUID format
+      const validation = schemas.uuid.safeParse(id);
+      if (!validation.success) {
+        return res.status(400).json({
+          error: 'Invalid rule ID format',
+          details: validation.error.flatten(),
+        });
+      }
+
       const rule = await prisma.rule.findUnique({
-        where: { id },
+        where: { id: validation.data },
         include: {
           conditions: true,
           actions: true,
@@ -1380,7 +1620,19 @@ app.put(
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const id = req.params.id as string;
-      const existingRule = await prisma.rule.findUnique({ where: { id } });
+
+      // Validate UUID format
+      const idValidation = schemas.uuid.safeParse(id);
+      if (!idValidation.success) {
+        return res.status(400).json({
+          error: 'Invalid rule ID format',
+          details: idValidation.error.flatten(),
+        });
+      }
+
+      const existingRule = await prisma.rule.findUnique({
+        where: { id: idValidation.data },
+      });
       if (!existingRule || existingRule.userId !== userId) {
         return res.status(404).json({ error: 'Rule not found' });
       }
@@ -1398,11 +1650,15 @@ app.put(
 
       // Run delete-then-create inside a transaction
       const updatedRule = await prisma.$transaction(async (tx) => {
-        await tx.ruleCondition.deleteMany({ where: { ruleId: id } });
-        await tx.ruleAction.deleteMany({ where: { ruleId: id } });
+        await tx.ruleCondition.deleteMany({
+          where: { ruleId: idValidation.data },
+        });
+        await tx.ruleAction.deleteMany({
+          where: { ruleId: idValidation.data },
+        });
 
         return tx.rule.update({
-          where: { id },
+          where: { id: idValidation.data },
           data: {
             name,
             description,
@@ -1442,12 +1698,24 @@ app.delete(
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const id = req.params.id as string;
-      const rule = await prisma.rule.findUnique({ where: { id } });
+
+      // Validate UUID format
+      const validation = schemas.uuid.safeParse(id);
+      if (!validation.success) {
+        return res.status(400).json({
+          error: 'Invalid rule ID format',
+          details: validation.error.flatten(),
+        });
+      }
+
+      const rule = await prisma.rule.findUnique({
+        where: { id: validation.data },
+      });
       if (!rule || rule.userId !== userId) {
         return res.status(404).json({ error: 'Rule not found' });
       }
 
-      await prisma.rule.delete({ where: { id } });
+      await prisma.rule.delete({ where: { id: validation.data } });
 
       return res.json({ message: 'Rule deleted successfully' });
     } catch (error) {
@@ -1470,13 +1738,25 @@ app.post(
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const id = req.params.id as string;
-      const rule = await prisma.rule.findUnique({ where: { id } });
+
+      // Validate UUID format
+      const validation = schemas.uuid.safeParse(id);
+      if (!validation.success) {
+        return res.status(400).json({
+          error: 'Invalid rule ID format',
+          details: validation.error.flatten(),
+        });
+      }
+
+      const rule = await prisma.rule.findUnique({
+        where: { id: validation.data },
+      });
       if (!rule || rule.userId !== userId) {
         return res.status(404).json({ error: 'Rule not found' });
       }
 
       const updated = await prisma.rule.update({
-        where: { id },
+        where: { id: validation.data },
         data: { isActive: !rule.isActive },
       });
 
@@ -1510,6 +1790,41 @@ app.get('/api/auth/google', (req: Request, res: Response) => {
   return res.json({ url });
 });
 
+/**
+ * Handle security-related request errors without leaking internal details.
+ */
+app.use(
+  (
+    err: Error & { code?: string; type?: string },
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    if (err.code === 'CORS_NOT_ALLOWED') {
+      return res.status(403).json({ error: 'Origin not allowed' });
+    }
+
+    if (err.type === 'entity.too.large') {
+      const ip = req.ip || req.socket.remoteAddress || 'unknown';
+      const cleanIp = Array.isArray(ip) ? ip[0] : ip;
+
+      // Use standardized security event logging
+      logger.warn('Request payload too large', {
+        ip: cleanIp,
+        path: req.path,
+        method: req.method,
+        limit: '10MB',
+      });
+
+      return res.status(413).json({
+        error: 'Payload Too Large',
+        message: 'Request body exceeds 10MB limit',
+      });
+    }
+    next(err);
+  }
+);
+
 // Start Server
 
 const server = app.listen(PORT, () => {
@@ -1536,17 +1851,7 @@ const server = app.listen(PORT, () => {
 // Initialize Socket.io Server with client-credentials CORS configuration
 const io = new SocketIoServer(server, {
   cors: {
-    origin: (origin: any, callback: any) => {
-      if (
-        !origin ||
-        origin.startsWith('http://localhost') ||
-        origin.startsWith('http://127.0.0.1')
-      ) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: corsOrigin,
     credentials: true,
   },
 });

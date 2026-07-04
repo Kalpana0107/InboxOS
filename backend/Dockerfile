@@ -17,10 +17,23 @@ COPY prisma ./prisma/
 RUN npx prisma generate
 
 # Copy the rest of the application files
-COPY . .
+COPY --chown=node:node . .
 
-# Set proper ownership of application directory to the non-root 'node' user
-RUN chown -R node:node /usr/src/app
+# Package managers are build-time tools. Remove them from the runtime image to
+# reduce attack surface and avoid shipping their dependency trees.
+RUN rm -rf /usr/local/lib/node_modules/npm \
+    /usr/local/lib/node_modules/corepack \
+    /opt/yarn-v1.22.22 \
+    /root/.npm \
+    && rm -f /usr/local/bin/npm \
+    /usr/local/bin/npx \
+    /usr/local/bin/corepack \
+    /usr/local/bin/yarn \
+    /usr/local/bin/yarnpkg
+
+# Winston writes production logs here; dependencies remain root-owned and
+# read-only to the runtime user.
+RUN mkdir -p /usr/src/app/logs && chown node:node /usr/src/app/logs
 
 # Switch to the non-root 'node' user for enhanced security
 USER node
@@ -29,4 +42,4 @@ USER node
 EXPOSE 8000
 
 # Default command to run the backend server (can be overridden in docker-compose)
-CMD ["npm", "run", "start"]
+CMD ["./node_modules/.bin/ts-node", "src/server.ts"]
