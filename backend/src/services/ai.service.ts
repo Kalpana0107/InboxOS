@@ -1062,119 +1062,164 @@ If there are no explicit, concrete tasks, return an empty array.`;
   }
 
   /**
-   * Generate a text reply or completion from AI given a prompt.
-   * Used by email reply generation, expense extraction, and digest generation.
+   * Extracts explicit deadline dates/times from an email subject and body.
+   * Returns an array of ISO 8601 strings (UTC). Returns empty array if none found.
    */
-  public static async generateReply(prompt: string): Promise<string> {
+  public static async extractDeadlines(
+    subject: string,
+    body: string
+  ): Promise<string[]> {
     const provider = process.env.AI_PROVIDER || 'openai';
-
-    try {
-      if (provider === 'gemini') {
-        const gemini = this.getGemini();
-        const response = await gemini.models.generateContent({
-          model: 'gemini-1.5-flash',
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        });
-        return response.text || '';
-      } else {
-        const openai = this.getOpenAI();
-        const response = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 1500,
-          temperature: 0.7,
-        });
-        return response.choices[0]?.message?.content || '';
-      }
-    } catch (err: any) {
-      // Fallback: return a generic message if AI is unavailable
-      throw new Error(`AI generateReply failed: ${err.message}`);
+    if (provider === 'gemini') {
+      return this.extractDeadlinesWithGemini(subject, body);
+    } else {
+      return this.extractDeadlinesWithOpenAI(subject, body);
     }
   }
 
-  /**
-   * Categorizes a link's purpose using LLM (OpenAI, Gemini, or Ollama)
-   */
-  public static async categorizeLink(href: string, text: string): Promise<string> {
-    const provider = process.env.AI_PROVIDER || 'openai';
-    const systemPrompt = `You are a link classification assistant. Categorize the given link (based on URL and anchor text) into one of the following categories:
-- unsubscribe
-- confirm
-- download
-- meeting
-- payment
-- other
+  private static async extractDeadlinesWithOpenAI(
+    subject: string,
+    body: string
+  ): Promise<string[]> {
+    const openai = this.getOpenAI();
 
-Provide the result as a JSON object with a single field 'category'.`;
-    const userPrompt = `URL: ${href}\nAnchor Text: ${text}`;
+    const systemPrompt = `You are an expert at extracting deadlines from emails.
+Extract ALL explicit deadline dates and times mentioned in the email subject or body.
+Convert them to ISO 8601 format in UTC (e.g. "2026-07-10T04:59:00.000Z").
+If a timezone is mentioned (e.g. "EST", "PST", "IST"), convert to UTC correctly.
+"EST" = UTC-5, "EDT" = UTC-4, "PST" = UTC-8, "PDT" = UTC-7, "IST" = UTC+5:30.
+If no explicit deadline is present, return an empty array.
+Do NOT infer or fabricate deadlines. Only return dates explicitly stated.`;
 
-    try {
-      if (provider === 'gemini') {
-        const gemini = this.getGemini();
-        const response = await gemini.models.generateContent({
+    const userPrompt = `Subject: ${subject}\nBody:\n${body}`;
+    const maxAttempts = 5;
+    let attempt = 0;
+    let delay = 1000;
+
+    while (attempt < maxAttempts) {
+      try {
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'deadline_extraction',
+              strict: true,
+              schema: {
+                type: 'object',
+                properties: {
+                  deadlines: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'ISO 8601 UTC datetime strings',
+                  },
+                },
+                required: ['deadlines'],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const rawContent = response.choices[0]?.message?.content;
+        if (!rawContent) {
+          throw new Error('OpenAI returned an empty deadline extraction response.');
+        }
+        const result = JSON.parse(rawContent) as { deadlines: string[] };
+        return result.deadlines || [];
+      } catch (error: any) {
+        attempt++;
+        const isRateLimit =
+          error.status === 429 ||
+          (error.message && error.message.includes('429'));
+        if (isRateLimit && attempt < maxAttempts) {
+          console.warn(
+            `[AIService] OpenAI Rate limit hit during deadline extraction. Retrying in ${delay}ms...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 2;
+        } else {
+          console.error('[AIService] Deadline extraction (OpenAI) failed:', error);
+          if (attempt >= maxAttempts) return [];
+          throw error;
+        }
+      }
+    }
+    return [];
+  }
+
+  private static async extractDeadlinesWithGemini(
+    subject: string,
+    body: string
+  ): Promise<string[]> {
+    const ai = this.getGemini();
+
+    const systemInstruction = `You are an expert at extracting deadlines from emails.
+Extract ALL explicit deadline dates and times mentioned in the email subject or body.
+Convert them to ISO 8601 format in UTC (e.g. "2026-07-10T04:59:00.000Z").
+If a timezone is mentioned (e.g. "EST", "PST", "IST"), convert to UTC correctly.
+"EST" = UTC-5, "EDT" = UTC-4, "PST" = UTC-8, "PDT" = UTC-7, "IST" = UTC+5:30.
+If no explicit deadline is present, return an empty array.
+Do NOT infer or fabricate deadlines. Only return dates explicitly stated.`;
+
+    const userContent = `Subject: ${subject}\nBody:\n${body}`;
+    const maxAttempts = 5;
+    let attempt = 0;
+    let delay = 1000;
+
+    while (attempt < maxAttempts) {
+      try {
+        const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
-          contents: userPrompt,
+          contents: userContent,
           config: {
-            systemInstruction: systemPrompt,
+            systemInstruction,
             responseMimeType: 'application/json',
             responseSchema: {
               type: 'OBJECT',
               properties: {
-                category: {
-                  type: 'STRING',
-                  enum: ['unsubscribe', 'confirm', 'download', 'meeting', 'payment', 'other'],
+                deadlines: {
+                  type: 'ARRAY',
+                  items: { type: 'STRING' },
                 },
               },
-              required: ['category'],
+              required: ['deadlines'],
             },
           },
         });
-        const parsed = JSON.parse(response.text || '{}');
-        return parsed.category || 'other';
-      } else if (provider === 'mock') {
-        const lowerHref = href.toLowerCase();
-        if (lowerHref.includes('zoom.us') || lowerHref.includes('meet.google.com')) {
-          return 'meeting';
-        }
-        return 'other';
-      } else {
-        return await this.categorizeLinkWithOpenAI(systemPrompt, userPrompt);
-      }
-    } catch (err: any) {
-      console.warn(`[AIService] Link categorization fallback to 'other' due to error:`, err.message);
-      return 'other';
-    }
-  }
 
-  private static async categorizeLinkWithOpenAI(systemPrompt: string, userPrompt: string): Promise<string> {
-    const openai = this.getOpenAI();
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      response_format: {
-        type: 'json_schema',
-        json_schema: {
-          name: 'link_categorization',
-          strict: true,
-          schema: {
-            type: 'object',
-            properties: {
-              category: {
-                type: 'string',
-                enum: ['unsubscribe', 'confirm', 'download', 'meeting', 'payment', 'other'],
-              },
-            },
-            required: ['category'],
-            additionalProperties: false,
-          },
-        },
-      },
-    });
-    const parsed = JSON.parse(response.choices[0]?.message?.content || '{}');
-    return parsed.category || 'other';
+        const rawContent = response.text;
+        if (!rawContent) {
+          throw new Error('Gemini returned an empty deadline extraction response.');
+        }
+        const result = JSON.parse(rawContent) as { deadlines: string[] };
+        return result.deadlines || [];
+      } catch (error: any) {
+        attempt++;
+        const isRateLimit =
+          error.status === 429 ||
+          (error.message &&
+            (error.message.includes('429') ||
+              error.message.includes('ResourceExhausted') ||
+              error.message.includes('quota')));
+        if (isRateLimit && attempt < maxAttempts) {
+          console.warn(
+            `[AIService] Gemini Rate limit hit during deadline extraction. Retrying in ${delay}ms...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay *= 2;
+        } else {
+          console.error('[AIService] Deadline extraction (Gemini) failed:', error);
+          if (attempt >= maxAttempts) return [];
+          throw error;
+        }
+      }
+    }
+    return [];
   }
 }
 
