@@ -14,6 +14,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { EmailList } from './components/EmailList';
 import { ComposeModal } from './components/ComposeModal';
 import { LandingPage } from './components/LandingPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
 import { SocketProvider, useSocket } from './context/SocketContext';
 import {
   ShieldAlert,
@@ -125,6 +126,8 @@ const DashboardContent: React.FC = () => {
     if (path.endsWith('/rules') || path.includes('/rules/')) return 'rules';
     if (path.endsWith('/settings') || path.includes('/settings/'))
       return 'settings';
+    if (path.endsWith('/analytics') || path.includes('/analytics/'))
+      return 'analytics';
     return 'inbox';
   };
 
@@ -237,6 +240,20 @@ const DashboardContent: React.FC = () => {
       icon: <CheckCircle2 size={18} className="text-emerald-400" />,
     },
   ];
+
+  if (activeTab === 'analytics') {
+    return (
+      <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-indigo-600/95 border border-indigo-500/30 text-white text-xs font-semibold shadow-2xl backdrop-blur-md animate-bounce">
+            <Sparkles size={14} className="text-amber-300" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+        <AnalyticsPage />
+      </Layout>
+    );
+  }
 
   if (activeTab === 'settings') {
     return (

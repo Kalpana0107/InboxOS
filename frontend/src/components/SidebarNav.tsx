@@ -9,6 +9,7 @@ import {
   Activity,
   Plus,
   X,
+  BarChart3,
 } from 'lucide-react';
 import { useCompose } from '../context/ComposeContext';
 
@@ -41,6 +42,11 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
       path: '/dashboard/rules',
       label: 'Routing Rules',
       icon: <Zap size={18} />,
+    },
+    {
+      path: '/dashboard/analytics',
+      label: 'Analytics',
+      icon: <BarChart3 size={18} />,
     },
     {
       path: '/dashboard/settings',
