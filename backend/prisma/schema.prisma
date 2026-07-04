@@ -8,29 +8,24 @@ generator client {
 }
 
 model User {
-  id             String           @id @default(uuid())
-  email          String           @unique
-  passwordHash   String
-  createdAt      DateTime         @default(now())
-  emails         Email[]
-  settings       UserSettings?
-  emailAccounts  EmailAccount[]
-  webhooks       WebhookEndpoint[]
-  rules          Rule[]
-  integrations   Integration[]
-  calendarEvents CalendarEvent[]
-  notifications  Notification[]
-  digests        Digest[]
-  expenses       Expense[]
-  reminders      Reminder[]
-  feedbacks      UserFeedback[]
+  id            String           @id @default(uuid())
+  email         String           @unique
+  passwordHash  String
+  createdAt     DateTime         @default(now())
+  emails        Email[]
+  settings      UserSettings?
+  emailAccounts EmailAccount[]
+  webhooks      WebhookEndpoint[]
+  rules         Rule[]
+  reminders     Reminder[]
+  notifications Notification[]
 }
 
 model UserSettings {
-  id              String   @id @default(uuid())
-  theme           String   @default("dark")
+  id              String  @id @default(uuid())
+  theme           String  @default("dark")
   signature       String?
-  autoReply       Boolean  @default(false)
+  autoReply       Boolean @default(false)
   telegramChatId  String?
   telegramEnabled Boolean  @default(false)
   dndEnabled      Boolean  @default(false)
@@ -67,8 +62,8 @@ model Email {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  threadId  String
-  thread    Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  threadId    String
+  thread      Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
   actionItems ActionItem[]
   embedding Unsupported("vector(1536)")?
 
@@ -103,16 +98,55 @@ model EmailAnalysis {
 }
 
 model ActionItem {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   emailId         String
   taskDescription String
-  isCompleted     Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  deadline        DateTime? // Added deadline DateTime?
+  isCompleted     Boolean   @default(false)
+  deadline        DateTime?
+  createdAt       DateTime  @default(now())
 
   email           Email    @relation(fields: [emailId], references: [id], onDelete: Cascade)
 }
 
+// ─── Reminder System ──────────────────────────────────────────────────────────
+
+model Reminder {
+  id          String    @id @default(uuid())
+  userId      String
+  emailId     String
+  deadline    DateTime  // stored in UTC
+  offsets     Int[]     // minutes before deadline: [1440, 60, 0]
+  status      String    @default("PENDING") // PENDING | FIRED | SNOOZED | CANCELLED
+  snoozeUntil DateTime?
+  jobIds      String[]  // BullMQ job IDs — used for cancellation
+  createdAt   DateTime  @default(now())
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email         Email          @relation(fields: [emailId], references: [id], onDelete: Cascade)
+  notifications Notification[]
+
+  // Deduplication: same email + same deadline = one reminder set
+  @@unique([emailId, deadline])
+  @@index([userId, status])
+  @@index([deadline])
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  userId     String
+  reminderId String
+  channel    String   // 'telegram' | 'slack' | 'discord'
+  message    String
+  sentAt     DateTime @default(now())
+  isRead     Boolean  @default(false)
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reminder Reminder @relation(fields: [reminderId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+// ─── Email Accounts ───────────────────────────────────────────────────────────
 
 model EmailAccount {
   id              String    @id @default(uuid())

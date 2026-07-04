@@ -14,6 +14,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { EmailList } from './components/EmailList';
 import { ComposeModal } from './components/ComposeModal';
 import { LandingPage } from './components/LandingPage';
+import { DeadlinesWidget } from './components/DeadlinesWidget';
 import { SocketProvider, useSocket } from './context/SocketContext';
 import {
   ShieldAlert,
@@ -1268,93 +1269,7 @@ const DashboardContent: React.FC = () => {
               </div>
             </div>
 
-            {/* Upcoming Deadlines Widget */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-white flex items-center gap-2 px-2">
-                <Clock size={16} className="text-amber-400" />
-                <span>Upcoming Deadlines</span>
-              </h3>
-
-              <div className="glass rounded-2xl p-4 border border-white/5 space-y-3">
-                {!upcomingReminders ? (
-                  <p className="text-[10px] text-gray-500 text-center py-2 animate-pulse">
-                    Loading deadlines...
-                  </p>
-                ) : upcomingReminders.length === 0 ? (
-                  <p className="text-[11px] text-gray-400 text-center py-4">
-                    No upcoming deadlines.
-                  </p>
-                ) : (
-                  <div className="space-y-2.5 max-h-[250px] overflow-y-auto pr-1">
-                    {upcomingReminders.map((reminder) => {
-                      const diffMs =
-                        new Date(reminder.deadline).getTime() - Date.now();
-                      const isOverdue = diffMs < 0;
-                      const diffDays = Math.ceil(
-                        Math.abs(diffMs) / (1000 * 60 * 60 * 24)
-                      );
-                      const diffHours = Math.ceil(
-                        Math.abs(diffMs) / (1000 * 60 * 60)
-                      );
-                      const timeText = isOverdue
-                        ? `Overdue by ${diffHours}h`
-                        : `Due in ${diffHours <= 24 ? `${diffHours}h` : `${diffDays}d`}`;
-
-                      return (
-                        <div
-                          key={reminder.id}
-                          className={`p-3 rounded-xl border transition-all ${
-                            isOverdue
-                              ? 'bg-rose-500/[0.02] border-rose-500/10'
-                              : 'bg-white/3 border-white/5 hover:border-white/10'
-                          }`}
-                        >
-                          <div className="flex justify-between items-start gap-2 mb-1.5">
-                            <p className="text-xs font-semibold text-white leading-normal truncate max-w-[130px]">
-                              {reminder.email?.subject || 'Follow-up Required'}
-                            </p>
-                            <span
-                              className={`text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
-                                isOverdue
-                                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                                  : 'bg-amber-400/10 text-amber-400 border border-amber-400/20'
-                              }`}
-                            >
-                              {timeText}
-                            </span>
-                          </div>
-
-                          <p className="text-[9px] text-gray-400 mb-2 truncate">
-                            {new Date(reminder.deadline).toLocaleString()}
-                          </p>
-
-                          <div className="flex gap-2 justify-end">
-                            <button
-                              onClick={() => handleSnooze(reminder.id, 30)}
-                              className="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] text-indigo-300 font-bold transition-all"
-                            >
-                              +30m
-                            </button>
-                            <button
-                              onClick={() => handleSnooze(reminder.id, 120)}
-                              className="px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-[9px] text-indigo-300 font-bold transition-all"
-                            >
-                              +2h
-                            </button>
-                            <button
-                              onClick={() => handleCancelReminder(reminder.id)}
-                              className="px-2 py-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-[9px] text-rose-400 font-bold transition-all"
-                            >
-                              Dismiss
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
+            <DeadlinesWidget />
 
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-white flex items-center gap-2 px-2">

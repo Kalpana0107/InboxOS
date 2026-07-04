@@ -113,4 +113,45 @@ export class TelegramNotificationService {
     const content = `⚠️ *Error Details:*\n\`\`\`\n${errorMsg}\n\`\`\``;
     return this.sendNotification(chatId, title, content, 'high');
   }
+
+  /**
+   * Deadline reminder alert.
+   * Sent when a BullMQ reminder job fires.
+   */
+  public static async sendReminderAlert(
+    chatId: string,
+    options: {
+      emailSubject: string;
+      deadline: Date;
+      offsetLabel: string;
+      isOverdue: boolean;
+    }
+  ): Promise<boolean> {
+    const { emailSubject, deadline, offsetLabel, isOverdue } = options;
+
+    // Format deadline in a readable UTC string
+    const deadlineFormatted = deadline.toLocaleString('en-US', {
+      timeZone: 'UTC',
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    });
+
+    const title = isOverdue
+      ? '⚠️ Overdue Deadline!'
+      : `🔔 Deadline Reminder — ${offsetLabel}`;
+
+    const content = isOverdue
+      ? `*Email:* ${emailSubject}\n*Deadline:* ${deadlineFormatted}\n\n_This deadline has passed. Please follow up._`
+      : `*Email:* ${emailSubject}\n*Deadline:* ${deadlineFormatted}\n*Alert:* ${offsetLabel} reminder`;
+
+    const priority = isOverdue ? 'high' : offsetLabel === 'at deadline' ? 'high' : 'normal';
+
+    return this.sendNotification(chatId, title, content, priority);
+  }
 }
+
