@@ -11,6 +11,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
+  loginWithFirebase: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
   error: string | null;
   clearError: () => void;
@@ -183,6 +184,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const loginWithFirebase = async (idToken: string) => {
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/firebase`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idToken }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Firebase authentication failed');
+      }
+
+      const data = await response.json();
+      const authenticatedUser = {
+        id: data.user.id,
+        email: data.user.email,
+      };
+
+      setUser(authenticatedUser);
+      localStorage.setItem('inboxos_user', JSON.stringify(authenticatedUser));
+    } catch (err: any) {
+      console.error('[AuthContext] Firebase Login failed:', err);
+      setError(err.message || 'Firebase login failed');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -209,6 +246,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         isLoading,
         login,
         register,
+        loginWithFirebase,
         logout,
         error,
         clearError,

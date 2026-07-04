@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { AuthLayout } from './AuthLayout';
+import { auth, googleProvider, isFirebaseConfigured } from '../firebase';
+import { signInWithPopup } from 'firebase/auth';
 import {
   UserCheck,
   Mail,
@@ -14,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const RegisterForm: React.FC = () => {
-  const { register, error: authError, clearError } = useAuth();
+  const { register, loginWithFirebase, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -318,16 +320,28 @@ export const RegisterForm: React.FC = () => {
         <button
           type="button"
           onClick={async () => {
+            if (!isFirebaseConfigured) {
+              // Mock onboarding registration and redirect
+              setIsLoading(true);
+              setTimeout(() => {
+                setIsLoading(false);
+                register('demo@inboxos.dev', 'password123').then(() =>
+                  navigate('/dashboard')
+                );
+              }, 1000);
+              return;
+            }
+
+            setIsLoading(true);
             try {
-              const apiBase =
-                import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
-              const res = await fetch(`${apiBase}/api/auth/google`, {
-                credentials: 'include',
-              });
-              const data = await res.json();
-              if (data.url) window.location.href = data.url;
-            } catch (e) {
-              console.error('Google sign-in failed', e);
+              const result = await signInWithPopup(auth, googleProvider);
+              const idToken = await result.user.getIdToken();
+              await loginWithFirebase(idToken);
+              navigate('/dashboard');
+            } catch (err: any) {
+              console.error('Google sign-in failed', err);
+            } finally {
+              setIsLoading(false);
             }
           }}
           className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white text-sm font-semibold transition-all duration-200 active:scale-[0.98]"

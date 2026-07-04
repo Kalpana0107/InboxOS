@@ -6,5 +6,8 @@
     "backend",
     "frontend",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "firebase": "^12.15.0"
+  }
 }

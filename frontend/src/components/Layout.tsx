@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, Moon, Menu } from 'lucide-react';
+import { Search, Bell, Moon, Menu, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { SidebarNav } from './SidebarNav';
 import { FloatingActionButton } from './FloatingActionButton';
@@ -99,14 +99,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   {user?.email || 'offline'}
                 </p>
               </div>
-              <button
-                onClick={logout}
-                title="Log Out"
-                className="w-11 h-11 md:w-8 md:h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 flex items-center justify-center text-xs font-bold text-white shadow-md border border-white/10 transition-all active:scale-95 min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0"
-              >
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow-md border border-white/10">
                 {user?.email ? user.email.substring(0, 2).toUpperCase() : 'OS'}
-              </button>
+              </div>
             </div>
+
+            <div className="h-6 w-px bg-white/10"></div>
+
+            {/* Logout Button */}
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 hover:text-rose-300 text-xs font-bold transition-all duration-200 active:scale-95 min-h-[40px] md:min-h-0"
+              title="Log Out"
+            >
+              <LogOut size={14} />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
           </div>
         </header>
 

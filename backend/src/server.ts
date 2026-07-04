@@ -27,8 +27,30 @@ import { Server as SocketIoServer } from 'socket.io';
 import { WebSocketService } from './services/websocket.service';
 import { TelegramBotService } from './services/telegram-bot.service';
 import { TelegramNotificationService } from './services/telegram-notification.service';
+import { initializeApp, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 
 const app = express();
+
+// Initialize Firebase Admin SDK if credentials are provided
+let firebaseAdminApp: any = null;
+if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+  try {
+    firebaseAdminApp = initializeApp({
+      credential: cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      }),
+    });
+    logger.info('Firebase Admin SDK initialized successfully');
+  } catch (err) {
+    logger.error('Failed to initialize Firebase Admin SDK:', err);
+  }
+} else {
+  logger.warn('Firebase Admin credentials not fully configured in environment variables.');
+}
+
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 8000;
 
@@ -242,6 +264,85 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Login error:', error);
     return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/auth/firebase
+ * Accepts Firebase ID token, verifies it, finds/creates a user, and returns standard JWT cookie.
+ */
+app.post('/api/auth/firebase', async (req: Request, res: Response) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ error: 'Firebase idToken is required' });
+    }
+
+    if (!firebaseAdminApp) {
+      return res.status(500).json({ error: 'Firebase Admin is not configured on this server.' });
+    }
+
+    // Verify token
+    const decodedToken = await getAuth().verifyIdToken(idToken);
+    const email = decodedToken.email;
+    if (!email) {
+      return res.status(400).json({ error: 'Email not present in Firebase token' });
+    }
+
+    // Check if user exists
+    let user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      // Create user with a dummy password hash (since they authenticate with Google/Firebase)
+      const dummyPassword = crypto.randomBytes(32).toString('hex');
+      const passwordHash = await AuthService.hashPassword(dummyPassword);
+
+      user = await prisma.user.create({
+        data: {
+          email,
+          passwordHash,
+        },
+      });
+    }
+
+    // Generate internal JWT token
+    const token = AuthService.generateToken(user.id, user.email);
+
+    // Set cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+
+    // Telegram security alert
+    try {
+      const userSettings = await prisma.userSettings.findFirst({
+        where: { userId: user.id, telegramEnabled: true },
+      });
+      if (userSettings && userSettings.telegramChatId) {
+        await TelegramNotificationService.sendAuthAlert(
+          userSettings.telegramChatId,
+          `New Google login via Firebase detected on your InboxOS account (${user.email}) at ${new Date().toISOString()}`
+        );
+      }
+    } catch (teleErr) {
+      logger.error('Failed to send Telegram auth alert:', teleErr);
+    }
+
+    return res.status(200).json({
+      message: 'Logged in successfully',
+      user: {
+        id: user.id,
+        email: user.email,
+      },
+    });
+  } catch (error: any) {
+    console.error('Firebase Auth error:', error);
+    return res.status(401).json({ error: 'Invalid Firebase ID token' });
   }
 });
 
