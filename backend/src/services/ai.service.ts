@@ -604,7 +604,9 @@ Provide a confidence score between 0.0 and 1.0. Also, extract all deadlines ment
 
       if (!item.deadline || item.deadline.trim() === '') {
         // Try parsing the task description first
-        let fallbackDate = this.parseDateWithChrono(item.taskDescription || item.task || '');
+        let fallbackDate = this.parseDateWithChrono(
+          item.taskDescription || item.task || ''
+        );
         if (!fallbackDate) {
           // If not found in task description, parse the email body
           fallbackDate = this.parseDateWithChrono(body);
