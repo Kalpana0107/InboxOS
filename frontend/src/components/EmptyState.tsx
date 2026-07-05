@@ -14,37 +14,35 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div
-      className="flex flex-col items-center justify-center text-center p-12 min-h-[320px] w-full"
+      className="flex flex-col items-center justify-center text-center p-12 min-h-[320px] w-full rounded-[22px]"
       style={{
         backgroundColor: 'var(--color-surface)',
-        border: '1px solid var(--color-ink)',
-        boxShadow: 'var(--shadow-offset)',
+        border: '1px solid var(--color-border)',
+        boxShadow: 'var(--shadow-card)',
       }}
     >
       {/* Icon block */}
       <div
-        className="mb-5 p-4 flex items-center justify-center"
+        className="mb-6 p-5 flex items-center justify-center rounded-full"
         style={{
-          backgroundColor: 'var(--color-accent)',
-          border: '1px solid var(--color-ink)',
-          boxShadow: 'var(--shadow-offset-sm)',
+          backgroundColor: 'rgba(93,107,47,.08)',
         }}
       >
-        <Icon size={40} style={{ color: 'var(--color-ink)' }} />
+        <Icon size={36} style={{ color: 'var(--color-primary)' }} />
       </div>
 
       {/* Title */}
       <h3
-        className="text-sm font-bold mb-2 uppercase tracking-wider"
-        style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}
+        className="text-[15px] font-semibold mb-2"
+        style={{ color: 'var(--color-ink)' }}
       >
         {title}
       </h3>
 
       {/* Description */}
       <p
-        className="text-xs max-w-[280px] leading-relaxed"
-        style={{ color: '#666', fontFamily: 'var(--font-body)' }}
+        className="text-[13px] max-w-[280px] leading-relaxed"
+        style={{ color: 'var(--color-muted)' }}
       >
         {description}
       </p>

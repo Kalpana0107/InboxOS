@@ -85,7 +85,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     return (
       <div
         className={`${baseClasses} ${sizeClass} ${className}`}
-        style={{ ...customStyle, border: '1px solid var(--color-ink)', overflow: 'hidden' }}
+        style={{ ...customStyle, border: '1px solid var(--avatar-border, var(--color-ink))', overflow: 'hidden' }}
       >
         <img
           src={imageUrl}
@@ -104,8 +104,8 @@ export const Avatar: React.FC<AvatarProps> = ({
         ...customStyle,
         backgroundColor: colorStyle.bg,
         color: colorStyle.fg,
-        border: '1px solid var(--color-ink)',
-        fontFamily: 'var(--font-display)',
+        border: '1px solid var(--avatar-border, var(--color-ink))',
+        fontFamily: 'var(--avatar-font, var(--font-display))',
       }}
     >
       <span className="tracking-tight uppercase">{initials}</span>

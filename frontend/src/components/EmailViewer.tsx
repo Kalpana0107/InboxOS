@@ -347,24 +347,24 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
 
   if (isError && !email) {
     return (
-      <div className="p-8 text-center flex flex-col items-center justify-center gap-4"
-        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-danger)', boxShadow: '6px 6px 0 var(--color-danger)' }}
+      <div className="p-8 text-center flex flex-col items-center justify-center gap-4 rounded-[22px]"
+        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid rgba(217,104,87,.20)', boxShadow: '0 4px 20px rgba(217,104,87,.10)' }}
       >
         <AlertTriangle size={32} style={{ color: 'var(--color-danger)' }} />
-        <h4 className="text-sm font-bold uppercase tracking-wider"
-          style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}
+        <h4 className="text-[14px] font-semibold"
+          style={{ color: 'var(--color-ink)' }}
         >
           Ingest Details Missing
         </h4>
-        <p className="text-xs" style={{ color: '#666' }}>
+        <p className="text-[12px]" style={{ color: 'var(--color-muted)' }}>
           Failed to retrieve raw mail and context parameters.
         </p>
         <button
           onClick={onBack}
-          className="px-4 py-2 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
-          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-ink)', boxShadow: 'var(--shadow-offset-sm)' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'translate(4px,4px)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-sm)'; (e.currentTarget as HTMLElement).style.transform = ''; }}
+          className="px-4 py-2 text-[13px] font-medium flex items-center gap-1.5 transition-all rounded-[10px]"
+          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)', color: 'var(--color-muted)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primary)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-primary)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; }}
         >
           <ArrowLeft size={12} />
           <span>Back to Ingests</span>
@@ -464,14 +464,14 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* ── Header Action Bar ────────────────────────────────────────────────────── */}
+      {/* ── Header Action Bar ─────────────────────────────── */}
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-3 py-2 text-xs font-bold uppercase tracking-wider min-h-[44px] transition-all"
-          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-ink)', boxShadow: 'var(--shadow-offset-sm)', fontFamily: 'var(--font-body)' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-sm)'; (e.currentTarget as HTMLElement).style.transform = ''; }}
+          className="flex items-center gap-2 px-3 py-2 text-[13px] font-medium min-h-[40px] transition-all rounded-[10px]"
+          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)', color: 'var(--color-muted)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primary)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-primary)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; }}
         >
           <ArrowLeft size={14} />
           <span>Back to Inbound</span>
@@ -479,26 +479,26 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
 
         <div className="flex items-center gap-2">
           <span
-            className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-1"
-            style={{ fontFamily: 'var(--font-mono)', backgroundColor: 'var(--color-ink)', color: '#fff' }}
+            className="text-[11px] font-medium px-2.5 py-1 rounded-full"
+            style={{ backgroundColor: 'rgba(93,107,47,.10)', color: 'var(--color-primary)' }}
           >
             ID: {email.id}
           </span>
         </div>
       </div>
 
-      {/* ── Main Split Panel Layout ────────────────────────────────────────────── */}
+      {/* ── Main Split Panel Layout ─────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* ── Left Column: Email Content Viewport ────────────────────────────────── */}
+        {/* ── Left Column: Email Content Viewport ─── */}
         <section
-          className="lg:col-span-2 overflow-hidden flex flex-col min-h-[500px]"
-          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-ink)', boxShadow: 'var(--shadow-offset)' }}
+          className="lg:col-span-2 overflow-hidden flex flex-col min-h-[500px] rounded-[22px]"
+          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)' }}
         >
           {/* Ingest metadata header */}
-          <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--color-ink)', backgroundColor: 'var(--color-accent)' }}>
+          <div className="px-6 py-5" style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'rgba(93,107,47,.04)' }}>
             <h1
-              className="text-base font-bold mb-3"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}
+              className="text-[16px] font-semibold mb-3"
+              style={{ color: 'var(--color-ink)' }}
             >
               {email.subject}
             </h1>
@@ -506,8 +506,8 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
               <div className="flex items-center gap-3">
                 <div
-                  className="w-9 h-9 flex items-center justify-center text-sm font-bold shrink-0"
-                  style={{ backgroundColor: 'var(--color-ink)', color: '#fff' }}
+                  className="w-9 h-9 flex items-center justify-center text-sm font-bold shrink-0 rounded-full"
+                  style={{ backgroundColor: 'var(--color-primary)', color: '#fff' }}
                 >
                   <User size={16} />
                 </div>
@@ -546,27 +546,27 @@ export const EmailViewer: React.FC<EmailViewerProps> = ({
           </div>
         </section>
 
-        {/* ── Right Column: AI Insights Sidebar ────────────────────────────────── */}
+        {/* ── Right Column: AI Insights Sidebar ─── */}
         <aside className="space-y-4">
           {/* AI Panel Wrapper */}
           <div
-            className="p-5 space-y-5"
-            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-ink)', boxShadow: 'var(--shadow-offset)' }}
+            className="p-5 space-y-5 rounded-[22px]"
+            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)' }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between pb-3" style={{ borderBottom: '1px solid var(--color-ink)' }}>
+            <div className="flex items-center justify-between pb-3" style={{ borderBottom: '1px solid var(--color-border)' }}>
               <div className="flex items-center gap-2">
-                <Sparkles size={15} style={{ color: 'var(--color-accent-cta)' }} />
+                <Sparkles size={15} style={{ color: 'var(--color-primary)' }} />
                 <h3
-                  className="text-xs font-bold uppercase tracking-wide"
-                  style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}
+                  className="text-[13px] font-semibold"
+                  style={{ color: 'var(--color-ink)' }}
                 >
                   AI Decision Analysis
                 </h3>
               </div>
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full opacity-75" style={{ backgroundColor: 'var(--color-success)' }}></span>
-                <span className="relative inline-flex h-2.5 w-2.5" style={{ backgroundColor: 'var(--color-success)' }}></span>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: 'var(--color-success)' }}></span>
+                <span className="relative inline-flex h-2 w-2 rounded-full" style={{ backgroundColor: 'var(--color-success)' }}></span>
               </span>
             </div>
 

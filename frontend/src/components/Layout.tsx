@@ -17,33 +17,30 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className="flex min-h-screen font-sans" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-ink)' }}>
-      {/* ── Left Sidebar (Desktop) ────────────────────────────────────────────────── */}
+      {/* ── Left Sidebar (Desktop) ────────────────────────────────────────── */}
       <aside
         className="hidden md:flex flex-col w-[260px] h-screen sticky top-0 z-30 shrink-0"
         style={{
           backgroundColor: 'var(--color-surface)',
-          borderRight: '1px solid var(--color-ink)',
+          borderRight: '1px solid var(--color-border)',
         }}
       >
         <SidebarNav />
       </aside>
 
-      {/* ── Mobile Sidebar Drawer ────────────────────────────────────────────────── */}
+      {/* ── Mobile Sidebar Drawer ─────────────────────────────────────────── */}
       <div
         className={`fixed inset-0 z-50 flex md:hidden transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       >
-        {/* Backdrop overlay */}
         <div
-          className="fixed inset-0 bg-black/50 transition-opacity duration-300"
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300"
           onClick={() => setIsMobileMenuOpen(false)}
         />
-
-        {/* Mobile drawer container */}
         <aside
           className={`relative flex flex-col w-[260px] h-full p-4 z-50 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
           style={{
             backgroundColor: 'var(--color-surface)',
-            borderRight: '1px solid var(--color-ink)',
+            borderRight: '1px solid var(--color-border)',
           }}
         >
           <SidebarNav
@@ -53,109 +50,126 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </aside>
       </div>
 
-      {/* ── Main Content Area ────────────────────────────────────────────────────── */}
+      {/* ── Main Content Area ─────────────────────────────────────────────── */}
       <div className="flex flex-col flex-1 min-w-0">
-        {/* Main Navbar Header */}
+        {/* Header */}
         <header
           className="px-4 md:px-8 py-3 flex items-center justify-between sticky top-0 z-20"
           style={{
             backgroundColor: 'var(--color-surface)',
-            borderBottom: '1px solid var(--color-ink)',
-            boxShadow: '0 3px 0 var(--color-ink)',
+            borderBottom: '1px solid var(--color-border)',
+            boxShadow: '0 1px 0 rgba(0,0,0,.04)',
           }}
         >
           {/* Mobile menu trigger */}
           <button
             onClick={() => setIsMobileMenuOpen(true)}
-            className="md:hidden p-2 flex items-center justify-center transition-colors min-h-[44px] min-w-[44px]"
-            style={{ border: '1px solid var(--color-ink)' }}
+            className="md:hidden p-2 flex items-center justify-center transition-all min-h-[40px] min-w-[40px] rounded-lg"
+            style={{ border: '1px solid var(--color-border)' }}
             aria-label="Open mobile menu"
           >
-            <Menu size={20} />
+            <Menu size={18} style={{ color: 'var(--color-muted)' }} />
           </button>
 
           {/* Search Bar */}
-          <div className="hidden sm:flex items-center w-full max-w-[380px] relative">
-            <Search size={15} className="absolute left-3" style={{ color: '#666' }} />
+          <div className="hidden sm:flex items-center w-full max-w-[400px] relative">
+            <Search size={14} className="absolute left-3" style={{ color: 'var(--color-muted)' }} />
             <input
               type="text"
-              placeholder="Search actions, emails, rules..."
+              placeholder="Search emails, tasks, rules…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="neu-input pl-10 text-xs"
-              style={{ fontFamily: 'var(--font-body)' }}
+              className="w-full pl-9 pr-4 py-2 text-[13px] rounded-[10px] outline-none transition-all"
+              style={{
+                backgroundColor: 'var(--color-bg)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-ink)',
+                fontFamily: 'var(--font-body)',
+              }}
+              onFocus={e => {
+                (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primary)';
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 3px rgba(93,107,47,.08)';
+              }}
+              onBlur={e => {
+                (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
+                (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+              }}
             />
           </div>
 
-          {/* Right Header Navigation */}
-          <div className="flex items-center gap-3">
-            {/* Dark Mode toggle visual */}
+          {/* Right Header */}
+          <div className="flex items-center gap-2">
+            {/* Theme toggle */}
             <button
-              className="p-2 flex items-center justify-center transition-colors min-h-[44px] min-w-[44px]"
-              style={{ border: '1px solid var(--color-ink)' }}
+              className="p-2 flex items-center justify-center transition-all min-h-[36px] min-w-[36px] rounded-lg"
+              style={{ border: '1px solid var(--color-border)', color: 'var(--color-muted)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primary)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-primary)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; }}
               aria-label="Toggle theme"
             >
-              <Moon size={16} />
+              <Moon size={15} />
             </button>
 
-            {/* Notification Bell */}
+            {/* Notifications */}
             <button
-              className="p-2 flex items-center justify-center transition-colors relative min-h-[44px] min-w-[44px]"
-              style={{ border: '1px solid var(--color-ink)' }}
+              className="p-2 flex items-center justify-center transition-all relative min-h-[36px] min-w-[36px] rounded-lg"
+              style={{ border: '1px solid var(--color-border)', color: 'var(--color-muted)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primary)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-primary)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; }}
               aria-label="Notifications"
             >
-              <Bell size={16} />
+              <Bell size={15} />
               <span
-                className="absolute top-1.5 right-1.5 h-2 w-2"
-                style={{ backgroundColor: 'var(--color-danger)', border: '1.5px solid var(--color-ink)' }}
+                className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: 'var(--color-danger)' }}
               />
             </button>
 
-            <div className="w-px h-6 bg-neu-ink opacity-20" />
+            {/* Divider */}
+            <div className="w-px h-6 mx-1" style={{ backgroundColor: 'var(--color-border)' }} />
 
-            {/* User Profile Info */}
-            <div className="flex items-center gap-2">
+            {/* User Profile */}
+            <div className="flex items-center gap-2.5">
               <div className="hidden sm:block text-right">
-                <p className="text-xs font-bold truncate max-w-[120px]" style={{ fontFamily: 'var(--font-body)' }}>
+                <p className="text-[13px] font-semibold leading-tight truncate max-w-[120px]" style={{ color: 'var(--color-ink)' }}>
                   {user?.email ? user.email.split('@')[0] : 'User'}
                 </p>
-                <p className="text-[10px] truncate max-w-[120px]" style={{ color: '#666' }}>
+                <p className="text-[11px] leading-tight truncate max-w-[120px]" style={{ color: 'var(--color-muted)' }}>
                   {user?.email || 'offline'}
                 </p>
               </div>
               <div
-                className="w-9 h-9 flex items-center justify-center text-xs font-bold"
+                className="w-8 h-8 flex items-center justify-center text-[11px] font-bold rounded-full shrink-0"
                 style={{
-                  backgroundColor: 'var(--color-accent-cta)',
-                  border: '1px solid var(--color-ink)',
+                  backgroundColor: 'var(--color-primary)',
                   color: '#fff',
-                  fontFamily: 'var(--font-display)',
                 }}
               >
-                {user?.email ? user.email.substring(0, 2).toUpperCase() : 'OS'}
+                {user?.email ? user.email.substring(0, 2).toUpperCase() : 'IO'}
               </div>
             </div>
 
-            <div className="w-px h-6 bg-neu-ink opacity-20" />
+            {/* Divider */}
+            <div className="w-px h-6 mx-1" style={{ backgroundColor: 'var(--color-border)' }} />
 
-            {/* Logout Button */}
+            {/* Logout */}
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold transition-all uppercase tracking-wider min-h-[40px]"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg transition-all"
               style={{
-                backgroundColor: 'var(--color-danger)',
-                border: '1px solid var(--color-ink)',
-                color: '#fff',
-                boxShadow: 'var(--shadow-offset-sm)',
-                fontFamily: 'var(--font-body)',
+                border: '1px solid var(--color-border)',
+                color: 'var(--color-muted)',
+                backgroundColor: 'transparent',
               }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-hover)';
-                (e.currentTarget as HTMLElement).style.transform = 'translate(1px,1px)';
+                (e.currentTarget as HTMLElement).style.backgroundColor = '#FEF0EE';
+                (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-danger)';
+                (e.currentTarget as HTMLElement).style.color = 'var(--color-danger)';
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-sm)';
-                (e.currentTarget as HTMLElement).style.transform = '';
+                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
+                (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)';
               }}
               title="Log Out"
             >
@@ -165,8 +179,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </header>
 
-        {/* Dashboard Content Portal */}
-        <main className="flex-1 overflow-y-auto px-4 md:px-8 py-6 max-w-[1600px] w-full mx-auto">
+        {/* Dashboard Content */}
+        <main className="flex-1 overflow-y-auto px-4 md:px-8 py-8 max-w-[1600px] w-full mx-auto">
           {children}
         </main>
       </div>

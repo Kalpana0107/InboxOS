@@ -469,20 +469,18 @@ export const EmailList: React.FC = () => {
     return <EmailViewer emailId={selectedEmailId} onBack={handleBackToList} />;
   }
 
-  // Neubrut button helper
+  // Premium pill tab helper
   const neuTabBtn = (isActive: boolean): React.CSSProperties => ({
-    backgroundColor: isActive ? 'var(--color-ink)' : 'var(--color-surface)',
-    color: isActive ? '#fff' : 'var(--color-ink)',
-    border: '1px solid var(--color-ink)',
-    boxShadow: isActive ? 'none' : 'var(--shadow-offset-sm)',
-    fontFamily: 'var(--font-body)',
-    fontWeight: 700,
-    fontSize: '11px',
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.04em',
-    padding: '6px 14px',
+    backgroundColor: isActive ? 'var(--color-primary)' : 'var(--color-surface)',
+    color: isActive ? '#fff' : 'var(--color-muted)',
+    border: isActive ? '1px solid transparent' : '1px solid var(--color-border)',
+    boxShadow: isActive ? '0 4px 14px rgba(93,107,47,.20)' : 'var(--shadow-sm)',
+    fontWeight: 500,
+    fontSize: '12px',
+    borderRadius: '100px',
+    padding: '5px 14px',
     cursor: 'pointer',
-    transition: 'box-shadow 0.1s, transform 0.1s',
+    transition: 'all 0.15s ease',
   });
 
   return (
@@ -517,14 +515,14 @@ export const EmailList: React.FC = () => {
                 style={neuTabBtn(isActive)}
                 onMouseEnter={e => {
                   if (!isActive) {
-                    (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-hover)';
-                    (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)';
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(93,107,47,.06)';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--color-ink)';
                   }
                 }}
                 onMouseLeave={e => {
                   if (!isActive) {
-                    (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-sm)';
-                    (e.currentTarget as HTMLElement).style.transform = '';
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-surface)';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)';
                   }
                 }}
               >
@@ -537,12 +535,13 @@ export const EmailList: React.FC = () => {
         {/* Search & Options */}
         <div className="flex items-center gap-2 shrink-0">
           <label
-            className="flex items-center gap-2 cursor-pointer select-none px-3 py-2 font-bold text-xs uppercase tracking-wider"
+          <label
+            className="flex items-center gap-2 cursor-pointer select-none px-3 py-1.5 font-medium text-[12px] rounded-full transition-all"
             style={{
-              backgroundColor: isAiSearch ? 'var(--color-accent-cta)' : 'var(--color-surface)',
-              color: isAiSearch ? '#fff' : 'var(--color-ink)',
-              border: '1px solid var(--color-ink)',
-              boxShadow: 'var(--shadow-offset-sm)',
+              backgroundColor: isAiSearch ? 'rgba(93,107,47,.10)' : 'var(--color-surface)',
+              color: isAiSearch ? 'var(--color-primary)' : 'var(--color-muted)',
+              border: '1px solid var(--color-border)',
+              boxShadow: 'var(--shadow-sm)',
             }}
           >
             <input
@@ -580,19 +579,20 @@ export const EmailList: React.FC = () => {
             disabled={isLoading || isFetching}
             title="Refresh Ingests"
             aria-label="Refresh Ingests"
-            className="p-2.5 flex items-center justify-center transition-all disabled:opacity-50 shrink-0"
+            className="p-2 flex items-center justify-center rounded-[8px] transition-all disabled:opacity-50 shrink-0"
             style={{
               backgroundColor: 'var(--color-surface)',
-              border: '1px solid var(--color-ink)',
-              boxShadow: 'var(--shadow-offset-sm)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-muted)',
+              boxShadow: 'var(--shadow-sm)',
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-              (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primary)';
+              (e.currentTarget as HTMLElement).style.color = 'var(--color-primary)';
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-sm)';
-              (e.currentTarget as HTMLElement).style.transform = '';
+              (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
+              (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)';
             }}
           >
             <RefreshCw
@@ -608,40 +608,39 @@ export const EmailList: React.FC = () => {
         <EmailSkeletonList count={pageSize} />
       ) : isError ? (
         <div
-          className="p-8 text-center flex flex-col items-center justify-center gap-3"
+          className="p-8 text-center flex flex-col items-center justify-center gap-3 rounded-[22px]"
           style={{
             backgroundColor: 'var(--color-surface)',
-            border: '1px solid var(--color-danger)',
-            boxShadow: '6px 6px 0px var(--color-danger)',
+            border: '1px solid rgba(217,104,87,.20)',
+            boxShadow: '0 4px 20px rgba(217,104,87,.10)',
           }}
         >
           <AlertCircle size={32} style={{ color: 'var(--color-danger)' }} />
           <div>
             <h4
-              className="text-sm font-bold uppercase tracking-wide"
-              style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}
+              className="text-[14px] font-semibold"
+              style={{ color: 'var(--color-ink)' }}
             >
               Pipeline Sync Error
             </h4>
-            <p className="text-xs mt-1" style={{ color: '#666' }}>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--color-muted)' }}>
               Failed to read email list from decision API.
             </p>
           </div>
           <button
             onClick={() => refetch()}
-            className="px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all"
+            className="px-4 py-2 text-[13px] font-medium rounded-[10px] transition-all"
             style={{
               backgroundColor: 'var(--color-danger)',
-              border: '1px solid var(--color-ink)',
-              boxShadow: 'var(--shadow-offset-sm)',
               color: '#fff',
+              boxShadow: '0 4px 14px rgba(217,104,87,.30)',
             }}
             onMouseEnter={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-              (e.currentTarget as HTMLElement).style.transform = 'translate(4px,4px)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(217,104,87,.40)';
+              (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
             }}
             onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-sm)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 14px rgba(217,104,87,.30)';
               (e.currentTarget as HTMLElement).style.transform = '';
             }}
           >
@@ -658,15 +657,15 @@ export const EmailList: React.FC = () => {
         <div className="space-y-0">
           {isSearching && (
             <div
-              className="text-center py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 mb-2"
+              className="text-center py-2.5 text-[12px] font-medium rounded-[10px] flex items-center justify-center gap-2 mb-3"
               style={{
-                backgroundColor: 'var(--color-accent)',
-                border: '1px solid var(--color-ink)',
-                color: 'var(--color-ink)',
+                backgroundColor: 'rgba(93,107,47,.06)',
+                border: '1px solid rgba(93,107,47,.15)',
+                color: 'var(--color-primary)',
               }}
             >
               <RefreshCw size={13} className="animate-spin" />
-              <span>Analyzing semantics...</span>
+              <span>Analyzing semantics…</span>
             </div>
           )}
           {displayedEmails.map((email) => (
@@ -684,40 +683,27 @@ export const EmailList: React.FC = () => {
         <div
           className="flex flex-col sm:flex-row gap-4 items-center justify-between px-2 pt-4"
           style={{
-            borderTop: '1px solid var(--color-ink)',
-            color: '#555',
+            borderTop: '1px solid var(--color-border)',
+            color: 'var(--color-muted)',
             fontSize: '12px',
-            fontFamily: 'var(--font-body)',
           }}
         >
-          {/* Records description */}
-          <div className="flex items-center gap-1.5 font-mono text-xs" style={{ fontFamily: 'var(--font-mono)', color: '#666' }}>
+          <div className="flex items-center gap-1.5 text-[12px]" style={{ color: 'var(--color-muted)' }}>
             <span>Showing</span>
-            <span className="font-bold" style={{ color: 'var(--color-ink)' }}>{startIndex + 1}</span>
+            <span className="font-semibold" style={{ color: 'var(--color-ink)' }}>{startIndex + 1}</span>
             <span>to</span>
-            <span className="font-bold" style={{ color: 'var(--color-ink)' }}>{endIndex}</span>
+            <span className="font-semibold" style={{ color: 'var(--color-ink)' }}>{endIndex}</span>
             <span>of</span>
-            <span className="font-bold" style={{ color: 'var(--color-ink)' }}>{totalItems}</span>
+            <span className="font-semibold" style={{ color: 'var(--color-ink)' }}>{totalItems}</span>
             <span>records</span>
           </div>
 
-          {/* Navigation Controls */}
           <div className="flex items-center gap-3">
-            {/* Page Size Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase" style={{ color: 'var(--color-ink)' }}>Limit:</span>
+              <span className="text-[12px]" style={{ color: 'var(--color-muted)' }}>Limit:</span>
               <select
                 value={pageSize}
                 onChange={(e) => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-                style={{
-                  backgroundColor: 'var(--color-surface)',
-                  border: '1px solid var(--color-ink)',
-                  color: 'var(--color-ink)',
-                  padding: '4px 8px',
-                  fontSize: '11px',
-                  fontFamily: 'var(--font-body)',
-                  fontWeight: 700,
-                }}
               >
                 {[5, 10, 25, 50].map((size) => (
                   <option key={size} value={size}>{size} rows</option>
@@ -725,37 +711,30 @@ export const EmailList: React.FC = () => {
               </select>
             </div>
 
-            {/* Paging Buttons */}
             <div className="flex items-center gap-1.5">
               <button
                 disabled={currentPage === 1}
                 onClick={() => handlePageChange(currentPage - 1)}
                 aria-label="Previous page"
-                className="p-2 transition-all disabled:opacity-30 disabled:pointer-events-none"
+                className="p-2 rounded-[8px] transition-all disabled:opacity-30 disabled:pointer-events-none"
                 style={{
                   backgroundColor: 'var(--color-surface)',
-                  border: '1px solid var(--color-ink)',
-                  boxShadow: 'var(--shadow-offset-sm)',
+                  border: '1px solid var(--color-border)',
+                  boxShadow: 'var(--shadow-sm)',
+                  color: 'var(--color-muted)',
                 }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-                  (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)';
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-sm)';
-                  (e.currentTarget as HTMLElement).style.transform = '';
-                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primary)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-primary)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; }}
               >
                 <ChevronLeft size={14} />
               </button>
 
               <div
-                className="flex items-center gap-1 font-bold px-2 text-xs"
-                style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-ink)' }}
+                className="flex items-center gap-1 font-medium px-2 text-[12px]"
+                style={{ color: 'var(--color-ink)' }}
               >
-                <span>Pg</span>
                 <span>{currentPage}</span>
-                <span>/</span>
+                <span style={{ color: 'var(--color-muted)' }}>/</span>
                 <span>{totalPages}</span>
               </div>
 
@@ -763,20 +742,15 @@ export const EmailList: React.FC = () => {
                 disabled={currentPage === totalPages}
                 onClick={() => handlePageChange(currentPage + 1)}
                 aria-label="Next page"
-                className="p-2 transition-all disabled:opacity-30 disabled:pointer-events-none"
+                className="p-2 rounded-[8px] transition-all disabled:opacity-30 disabled:pointer-events-none"
                 style={{
                   backgroundColor: 'var(--color-surface)',
-                  border: '1px solid var(--color-ink)',
-                  boxShadow: 'var(--shadow-offset-sm)',
+                  border: '1px solid var(--color-border)',
+                  boxShadow: 'var(--shadow-sm)',
+                  color: 'var(--color-muted)',
                 }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-                  (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)';
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-sm)';
-                  (e.currentTarget as HTMLElement).style.transform = '';
-                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primary)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-primary)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; }}
               >
                 <ChevronRight size={14} />
               </button>

@@ -17,10 +17,8 @@ import {
 
 const GoogleIcon = () => (
   <svg
-    className="w-4.5 h-4.5"
+    className="w-[18px] h-[18px]"
     viewBox="0 0 24 24"
-    width="18"
-    height="18"
     xmlns="http://www.w3.org/2000/svg"
   >
     <path
@@ -62,13 +60,25 @@ export const LoginForm: React.FC = () => {
 
   const validate = () => {
     let isValid = true;
-    if (!email) { setEmailError('Email is required'); isValid = false; }
-    else if (!/\S+@\S+\.\S+/.test(email)) { setEmailError('Please enter a valid email address'); isValid = false; }
-    else { setEmailError(null); }
+    if (!email) {
+      setEmailError('Email is required');
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Please enter a valid email address');
+      isValid = false;
+    } else {
+      setEmailError(null);
+    }
 
-    if (!password) { setPasswordError('Password is required'); isValid = false; }
-    else if (password.length < 6) { setPasswordError('Password must be at least 6 characters'); isValid = false; }
-    else { setPasswordError(null); }
+    if (!password) {
+      setPasswordError('Password is required');
+      isValid = false;
+    } else if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      isValid = false;
+    } else {
+      setPasswordError(null);
+    }
 
     return isValid;
   };
@@ -88,36 +98,20 @@ export const LoginForm: React.FC = () => {
     }
   };
 
-  // shared input style
-  const inputStyle = (hasError?: boolean): React.CSSProperties => ({
-    width: '100%',
-    backgroundColor: 'var(--color-surface)',
-    border: `1px solid ${hasError ? 'var(--color-danger)' : 'var(--color-ink)'}`,
-    color: 'var(--color-ink)',
-    fontFamily: 'var(--font-body)',
-    fontSize: '13px',
-    padding: '10px 14px',
-    outline: 'none',
-    boxShadow: hasError ? '3px 3px 0 var(--color-danger)' : undefined,
-  });
-
   return (
     <AuthLayout>
-      <div className="w-full space-y-5">
+      <div className="w-full space-y-6 text-left">
         {/* Welcome */}
-        <div className="space-y-2 text-left">
-          <h3
-            className="text-2xl font-black tracking-tight flex items-center gap-2"
-            style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}
-          >
-            Welcome Back <Sparkles size={18} style={{ color: 'var(--color-accent-cta)' }} />
+        <div className="space-y-1.5 pb-2">
+          <h3 className="text-[36px] font-bold text-[#1D1D1D] tracking-tight leading-none flex items-center gap-2.5">
+            Welcome Back <Sparkles size={24} className="text-[#5F6B38]" />
           </h3>
-          <p className="text-xs" style={{ color: '#666', fontFamily: 'var(--font-body)' }}>
+          <p className="text-[16px] text-[#6B7280]">
             Sign in to your AI Inbox Operating System.
           </p>
         </div>
 
-        {/* Google Authentication */}
+        {/* Google Authentication (Redesigned White Button) */}
         <button
           type="button"
           onClick={async () => {
@@ -125,7 +119,9 @@ export const LoginForm: React.FC = () => {
               setIsLoading(true);
               setTimeout(() => {
                 setIsLoading(false);
-                login('demo@inboxos.dev', 'password123').then(() => navigate('/dashboard'));
+                login('demo@inboxos.dev', 'password123').then(() =>
+                  navigate('/dashboard')
+                );
               }, 1000);
               return;
             }
@@ -141,135 +137,115 @@ export const LoginForm: React.FC = () => {
               setIsLoading(false);
             }
           }}
-          className="w-full flex items-center justify-center gap-2.5 px-4 py-3 font-bold text-xs uppercase tracking-wider transition-all min-h-[44px]"
-          style={{
-            backgroundColor: 'var(--color-surface)',
-            border: '1px solid var(--color-ink)',
-            color: 'var(--color-ink)',
-            boxShadow: 'var(--shadow-offset)',
-            fontFamily: 'var(--font-body)',
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-hover)';
-            (e.currentTarget as HTMLElement).style.transform = 'translate(3px,3px)';
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset)';
-            (e.currentTarget as HTMLElement).style.transform = '';
-          }}
+          className="w-full h-[54px] flex items-center justify-center gap-3 bg-white border border-[#EAE5DA] rounded-[16px] text-[#1D1D1D] text-[15px] font-semibold transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] hover:bg-[#FAF7F2]"
         >
           <GoogleIcon />
           <span>Continue with Google</span>
         </button>
 
         {/* Divider */}
-        <div className="relative flex py-2 items-center">
-          <div className="flex-grow" style={{ borderTop: '1px solid var(--color-ink)' }} />
-          <span
-            className="flex-shrink mx-4 text-[10px] font-bold uppercase tracking-wider"
-            style={{ color: '#888', fontFamily: 'var(--font-body)' }}
-          >
-            or continue with email
+        <div className="flex items-center gap-4 py-2">
+          <div className="flex-grow border-t border-[#EAE5DA]" />
+          <span className="text-[11px] font-bold uppercase tracking-widest text-[#9CA3AF]">
+            OR
           </span>
-          <div className="flex-grow" style={{ borderTop: '1px solid var(--color-ink)' }} />
+          <div className="flex-grow border-t border-[#EAE5DA]" />
         </div>
 
         {/* Auth Error Alert */}
         {authError && (
-          <div
-            className="flex items-center gap-3 p-3.5 text-xs text-left"
-            style={{
-              backgroundColor: '#FFF0F0',
-              border: '1px solid var(--color-danger)',
-              color: 'var(--color-danger)',
-              boxShadow: '3px 3px 0 var(--color-danger)',
-            }}
-          >
-            <AlertCircle size={14} className="shrink-0" />
-            <p className="leading-snug">{authError}</p>
+          <div className="flex items-center gap-3 p-4 bg-[#FFF0F0] border border-[#FCA5A5] rounded-[14px] text-[#EF4444] text-xs">
+            <AlertCircle size={16} className="shrink-0 text-[#EF4444]" />
+            <p className="leading-snug font-medium">{authError}</p>
           </div>
         )}
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Email */}
-          <div className="space-y-1.5 text-left">
-            <label
-              className="text-[10px] font-bold uppercase tracking-widest block"
-              style={{ color: '#444', fontFamily: 'var(--font-body)' }}
-            >
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#374151] tracking-wide block">
               Email Address
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-3" style={{ color: '#777' }}>
-                <Mail size={15} />
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]">
+                <Mail size={16} strokeWidth={1.5} />
               </span>
               <input
                 type="email"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(null); }}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError(null);
+                }}
                 disabled={isLoading}
-                style={{ ...inputStyle(!!emailError), paddingLeft: '36px' }}
+                className={`w-full h-[54px] pl-11 pr-4 text-[15px] bg-[#FCFCFE] border rounded-[14px] text-[#1D1D1D] placeholder-[#9CA3AF] outline-none transition-all duration-200 ${
+                  emailError
+                    ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-4 focus:ring-[#EF4444]/10'
+                    : 'border-[#EAE5DA] focus:border-[#5F6B38] focus:ring-4 focus:ring-[#5F6B38]/10'
+                }`}
               />
             </div>
             {emailError && (
-              <p className="text-[10px] flex items-center gap-1.5 mt-1 font-bold pl-1" style={{ color: 'var(--color-danger)' }}>
-                <AlertCircle size={10} />
+              <p className="text-[11px] flex items-center gap-1.5 mt-1 font-semibold text-[#EF4444] pl-1">
+                <AlertCircle size={11} />
                 <span>{emailError}</span>
               </p>
             )}
           </div>
 
           {/* Password */}
-          <div className="space-y-1.5 text-left">
+          <div className="space-y-1.5">
             <div className="flex justify-between items-center">
-              <label
-                className="text-[10px] font-bold uppercase tracking-widest block"
-                style={{ color: '#444', fontFamily: 'var(--font-body)' }}
-              >
+              <label className="text-xs font-semibold text-[#374151] tracking-wide block">
                 Password
               </label>
               <a
                 href="#"
-                className="text-[9px] font-bold uppercase tracking-wider transition-colors"
-                style={{ color: 'var(--color-accent-cta)' }}
+                className="text-xs font-semibold text-[#5F6B38] hover:underline"
               >
-                Forgot?
+                Forgot Password?
               </a>
             </div>
             <div className="relative">
-              <span className="absolute left-3 top-3" style={{ color: '#777' }}>
-                <Lock size={15} />
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]">
+                <Lock size={16} strokeWidth={1.5} />
               </span>
               <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={password}
                 onKeyDown={handleKeyDown}
-                onChange={(e) => { setPassword(e.target.value); if (passwordError) setPasswordError(null); }}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (passwordError) setPasswordError(null);
+                }}
                 disabled={isLoading}
-                style={{ ...inputStyle(!!passwordError), paddingLeft: '36px', paddingRight: '44px' }}
+                className={`w-full h-[54px] pl-11 pr-12 text-[15px] bg-[#FCFCFE] border rounded-[14px] text-[#1D1D1D] placeholder-[#9CA3AF] outline-none transition-all duration-200 ${
+                  passwordError
+                    ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-4 focus:ring-[#EF4444]/10'
+                    : 'border-[#EAE5DA] focus:border-[#5F6B38] focus:ring-4 focus:ring-[#5F6B38]/10'
+                }`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 tabIndex={-1}
-                className="absolute right-3 top-3 transition-colors"
-                style={{ color: '#777' }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#1D1D1D] transition-colors"
               >
-                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                {showPassword ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
               </button>
             </div>
             {isCapsLockOn && (
-              <p className="text-[9px] flex items-center gap-1.5 mt-1 font-bold pl-1 uppercase" style={{ color: 'var(--color-pending)' }}>
-                <AlertCircle size={9} />
-                <span>Warning: Caps Lock is On</span>
+              <p className="text-[10px] flex items-center gap-1.5 mt-1 font-semibold text-[#F59E0B] pl-1">
+                <AlertCircle size={10} />
+                <span>Caps Lock is On</span>
               </p>
             )}
             {passwordError && (
-              <p className="text-[10px] flex items-center gap-1.5 mt-1 font-bold pl-1" style={{ color: 'var(--color-danger)' }}>
-                <AlertCircle size={10} />
+              <p className="text-[11px] flex items-center gap-1.5 mt-1 font-semibold text-[#EF4444] pl-1">
+                <AlertCircle size={11} />
                 <span>{passwordError}</span>
               </p>
             )}
@@ -279,52 +255,33 @@ export const LoginForm: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-1.5 px-4 py-3 font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 disabled:pointer-events-none mt-2 min-h-[44px]"
-            style={{
-              backgroundColor: 'var(--color-accent-cta)',
-              border: '1px solid var(--color-ink)',
-              color: '#fff',
-              boxShadow: 'var(--shadow-offset)',
-              fontFamily: 'var(--font-body)',
-            }}
-            onMouseEnter={e => {
-              if (!isLoading) {
-                (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-hover)';
-                (e.currentTarget as HTMLElement).style.transform = 'translate(3px,3px)';
-              }
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset)';
-              (e.currentTarget as HTMLElement).style.transform = '';
-            }}
+            className="w-full h-[54px] flex items-center justify-center gap-2 bg-[#5F6B38] hover:bg-[#4F5A2F] text-white text-[15px] font-semibold rounded-[16px] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_25px_rgba(95,107,56,0.25)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none mt-4"
           >
             {isLoading ? (
               <>
-                <Loader2 size={14} className="animate-spin" />
+                <Loader2 size={16} className="animate-spin text-white" />
                 <span>Authenticating...</span>
               </>
             ) : (
               <>
                 <span>Continue</span>
-                <ArrowRight size={13} />
+                <ArrowRight size={15} strokeWidth={2} />
               </>
             )}
           </button>
         </form>
 
-        {/* Footer */}
-        <div
-          className="text-center pt-4 text-[10px] font-semibold"
-          style={{ borderTop: '1px solid var(--color-ink)', color: '#666', fontFamily: 'var(--font-body)' }}
-        >
-          <p>Join thousands of users running email as an operating system.</p>
+        {/* Footer Links */}
+        <div className="text-center pt-5 border-t border-[#EAE5DA] mt-3">
+          <p className="text-xs text-[#6B7280]">
+            Join thousands of users running email as an operating system.
+          </p>
           <Link
             to="/register"
             onClick={clearError}
-            className="font-bold uppercase tracking-wider mt-1 block transition-colors"
-            style={{ color: 'var(--color-accent-cta)' }}
+            className="text-xs font-semibold text-[#5F6B38] hover:underline mt-2 block"
           >
-            Create an Account →
+            Create an Account
           </Link>
         </div>
       </div>

@@ -34,6 +34,14 @@ import {
   Bell,
   Calendar,
   Clock,
+  CheckSquare,
+  Trash2,
+  ListChecks,
+  AlertCircle,
+  Tag,
+  ChevronRight,
+  Plus,
+  ExternalLink,
 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -57,40 +65,40 @@ const MetricCard: React.FC<MetricCardProps> = ({
   bg,
   accent,
 }) => {
-  const cardBg = bg || (isPositive ? '#F0FFF5' : '#FFF0F0');
   const accentColor = accent || (isPositive ? 'var(--color-success)' : 'var(--color-danger)');
 
   return (
     <div
-      className="relative overflow-hidden p-5 transition-all duration-200"
+      className="relative overflow-hidden p-5 rounded-[22px] transition-all duration-250"
       style={{
-        backgroundColor: cardBg,
-        border: '1px solid var(--color-ink)',
-        boxShadow: 'var(--shadow-offset)',
+        backgroundColor: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        boxShadow: 'var(--shadow-card)',
       }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-hover)';
-        (e.currentTarget as HTMLElement).style.transform = 'translate(3px,3px)';
+        (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)';
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)';
       }}
       onMouseLeave={e => {
-        (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset)';
+        (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)';
         (e.currentTarget as HTMLElement).style.transform = '';
       }}
     >
-      <div className="flex justify-between items-start mb-3">
-        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#555', fontFamily: 'var(--font-body)' }}>{title}</span>
-        <div className="p-2 flex items-center justify-center" style={{ backgroundColor: 'var(--color-ink)', color: '#fff' }}>{icon}</div>
+      {/* Accent bar */}
+      <div className="absolute top-0 left-0 right-0 h-[3px] rounded-t-[22px]" style={{ backgroundColor: accentColor }} />
+      <div className="flex justify-between items-start mb-4 pt-1">
+        <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>{title}</span>
+        <div className="p-2 flex items-center justify-center rounded-xl" style={{ backgroundColor: `${accentColor}18`, color: accentColor }}>{icon}</div>
       </div>
       <div className="flex items-baseline gap-2">
-        <span className="text-2xl font-black tracking-tight" style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}>
+        <span className="text-[28px] font-bold tracking-tight" style={{ color: 'var(--color-ink)' }}>
           {value}
         </span>
         <span
-          className="text-[10px] font-bold px-2 py-0.5"
+          className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
           style={{
-            backgroundColor: accentColor,
-            border: '1.5px solid var(--color-ink)',
-            color: '#fff',
+            backgroundColor: isPositive ? 'rgba(63,167,106,.12)' : 'rgba(217,104,87,.12)',
+            color: accentColor,
           }}
         >
           {change}
@@ -187,6 +195,20 @@ const DashboardContent: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Tasks tab state
+  const [tasksList, setTasksList] = useState<any[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [tasksTotal, setTasksTotal] = useState(0);
+
+  // Rules tab state
+  const [rulesList, setRulesList] = useState<any[]>([
+    { id: '1', name: 'Invoice Auto-Tag', condition: 'subject contains "invoice" OR "payment"', action: 'Label → Finance · Priority High', enabled: true, executions: 142 },
+    { id: '2', name: 'Newsletter Digest', condition: 'sender domain in [substack.com, beehiiv.com]', action: 'Archive · Add to Weekly Digest', enabled: true, executions: 87 },
+    { id: '3', name: 'OTP Fast-Path', condition: 'subject matches /\\b\\d{4,8}\\b/ AND sender trusted', action: 'Extract OTP → Clipboard · Archive', enabled: true, executions: 319 },
+    { id: '4', name: 'Support Escalation', condition: 'body contains "urgent" AND priority >= 80', action: 'Notify Telegram · Flag Red', enabled: false, executions: 23 },
+  ]);
+
   // Synced backend settings fields
   const [signature, setSignature] = useState('');
   const [autoReply, setAutoReply] = useState(false);
@@ -218,6 +240,62 @@ const DashboardContent: React.FC = () => {
       fetchDigests();
     }
   }, [activeTab, settingsSubTab]);
+
+  // Load tasks when on tasks tab
+  useEffect(() => {
+    if (activeTab !== 'tasks') return;
+    const fetchTasks = async () => {
+      setTasksLoading(true);
+      try {
+        const res = await fetch(
+          `${API_BASE}/api/tasks?completed=${showCompleted}&limit=50`,
+          { credentials: 'include' }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setTasksList(data.tasks || []);
+          setTasksTotal(data.total || 0);
+        }
+      } catch (err) {
+        console.error('[Tasks] fetch error', err);
+      } finally {
+        setTasksLoading(false);
+      }
+    };
+    fetchTasks();
+  }, [activeTab, showCompleted]);
+
+  const handleToggleTask = async (id: string, current: boolean) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/tasks/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isCompleted: !current }),
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setTasksList(prev =>
+          prev.map(t => t.id === id ? { ...t, isCompleted: !current } : t)
+        );
+      }
+    } catch (err) {
+      console.error('[Tasks] toggle error', err);
+    }
+  };
+
+  const handleDeleteTask = async (id: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/tasks/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setTasksList(prev => prev.filter(t => t.id !== id));
+      }
+    } catch (err) {
+      console.error('[Tasks] delete error', err);
+    }
+  };
 
   useEffect(() => {
     if (activeTab === 'settings') {
@@ -428,10 +506,10 @@ const DashboardContent: React.FC = () => {
       <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
         {toastMessage && (
           <div
-            className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 text-black font-black text-xs font-bold uppercase tracking-wider shadow-2xl"
-            style={{ backgroundColor: 'var(--color-ink)', border: '1px solid var(--color-ink)', boxShadow: '5px 5px 0 var(--color-accent-cta)', fontFamily: 'var(--font-body)' }}
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-[14px] text-[13px] font-medium shadow-lg"
+            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-hover)', color: 'var(--color-ink)' }}
           >
-            <Sparkles size={14} style={{ color: 'var(--color-accent)' }} />
+            <Sparkles size={14} style={{ color: 'var(--color-primary)' }} />
             <span>{toastMessage}</span>
           </div>
         )}
@@ -444,24 +522,24 @@ const DashboardContent: React.FC = () => {
     return (
       <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
         {toastMessage && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-indigo-600/95 border border-indigo-500/30 text-black font-black text-xs font-semibold shadow-2xl backdrop-blur-md animate-bounce">
-            <Sparkles size={14} className="text-amber-300" />
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-[14px] text-[13px] font-medium shadow-lg" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-hover)', color: 'var(--color-ink)' }}>
+            <Sparkles size={14} style={{ color: 'var(--color-primary)' }} />
             <span>{toastMessage}</span>
           </div>
         )}
         <div className="space-y-6 animate-fadeIn">
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5" style={{ borderBottom: '1px solid var(--color-ink)' }}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5" style={{ borderBottom: '1px solid var(--color-border)' }}>
             <div className="text-left">
-              <h2 className="text-xl font-black tracking-tight flex items-center gap-2" style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}>
-                System Preferences <Sliders size={18} style={{ color: 'var(--color-accent-cta)' }} />
+              <h2 className="text-[22px] font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--color-ink)' }}>
+                System Preferences <Sliders size={18} style={{ color: 'var(--color-primary)' }} />
               </h2>
-              <p className="text-xs" style={{ color: '#666', fontFamily: 'var(--font-body)' }}>
-                Configure your AI operating system settings, LLM integration, and outbound channels.
+              <p className="text-[13px] mt-1" style={{ color: 'var(--color-muted)' }}>
+                Configure your AI operating system, LLM integration, and outbound channels.
               </p>
             </div>
             {saveSuccess && (
-              <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: 'var(--color-success)', border: '1px solid var(--color-ink)', boxShadow: '3px 3px 0 var(--color-ink)', color: '#fff' }}>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full text-[12px] font-medium" style={{ backgroundColor: 'rgba(63,167,106,.12)', color: 'var(--color-success)' }}>
                 <CheckCircle2 size={14} />
                 <span>Changes saved</span>
               </div>
@@ -472,23 +550,22 @@ const DashboardContent: React.FC = () => {
             {/* Sub-navigation */}
             <div className="md:col-span-1 flex flex-col gap-1.5">
               {[
-                { id: 'profile', label: 'General Profile', icon: <User size={16} /> },
-                { id: 'ai', label: 'AI Intelligence', icon: <Bot size={16} /> },
-                { id: 'integrations', label: 'Connections', icon: <Mail size={16} /> },
-                { id: 'notifications', label: 'Alert Rules', icon: <Bell size={16} /> },
-                { id: 'digests', label: 'Email Digests', icon: <Sliders size={16} /> },
+                { id: 'profile', label: 'General Profile', icon: <User size={15} /> },
+                { id: 'ai', label: 'AI Intelligence', icon: <Bot size={15} /> },
+                { id: 'integrations', label: 'Connections', icon: <Mail size={15} /> },
+                { id: 'notifications', label: 'Alert Rules', icon: <Bell size={15} /> },
+                { id: 'digests', label: 'Email Digests', icon: <Sliders size={15} /> },
               ].map((subTab) => (
                 <button
                   key={subTab.id}
                   onClick={() => setSettingsSubTab(subTab.id)}
-                  className="flex items-center gap-3 px-4 py-3 text-xs font-bold tracking-wide transition-all text-left uppercase"
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-[13px] font-medium transition-all text-left"
                   style={{
-                    backgroundColor: settingsSubTab === subTab.id ? 'var(--color-accent)' : 'transparent',
-                    border: `1px solid ${settingsSubTab === subTab.id ? 'var(--color-ink)' : 'transparent'}`,
-                    boxShadow: settingsSubTab === subTab.id ? '3px 3px 0 var(--color-ink)' : 'none',
-                    color: 'var(--color-ink)',
-                    fontFamily: 'var(--font-body)',
+                    backgroundColor: settingsSubTab === subTab.id ? 'rgba(93,107,47,.10)' : 'transparent',
+                    color: settingsSubTab === subTab.id ? 'var(--color-primary)' : 'var(--color-muted)',
                   }}
+                  onMouseEnter={e => { if (settingsSubTab !== subTab.id) { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(93,107,47,.05)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-ink)'; } }}
+                  onMouseLeave={e => { if (settingsSubTab !== subTab.id) { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; } }}
                 >
                   {subTab.icon}
                   <span>{subTab.label}</span>
@@ -498,8 +575,8 @@ const DashboardContent: React.FC = () => {
 
             {/* Form card */}
             <div
-              className="md:col-span-3 relative overflow-hidden p-6"
-              style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-ink)', boxShadow: 'var(--shadow-offset)' }}
+              className="md:col-span-3 relative overflow-hidden p-6 rounded-[22px]"
+              style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)' }}
             >
 
               {settingsSubTab === 'profile' && (
@@ -1155,31 +1232,304 @@ const DashboardContent: React.FC = () => {
     );
   }
 
+  if (activeTab === 'tasks') {
+    const pending = tasksList.filter(t => !t.isCompleted);
+    const completed = tasksList.filter(t => t.isCompleted);
+    return (
+      <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+        {toastMessage && (
+          <div
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 text-xs font-bold uppercase tracking-wider"
+            style={{ backgroundColor: 'var(--color-ink)', border: '1px solid var(--color-ink)', boxShadow: '5px 5px 0 var(--color-accent)', fontFamily: 'var(--font-body)', color: '#fff' }}
+          >
+            <Sparkles size={14} style={{ color: 'var(--color-accent)' }} />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+        <div className="space-y-6 animate-fadeIn">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5" style={{ borderBottom: '1px solid var(--color-border)' }}>
+            <div>
+              <h2 className="text-[22px] font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--color-ink)' }}>
+                <ListChecks size={20} style={{ color: 'var(--color-primary)' }} />
+                Dashboard Tasks
+              </h2>
+              <p className="text-[13px] mt-1" style={{ color: 'var(--color-muted)' }}>
+                AI-extracted action items from your inbox. {tasksTotal} total tracked.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowCompleted(!showCompleted)}
+                className="flex items-center gap-2 px-4 py-2 text-[13px] font-medium rounded-[10px] transition-all"
+                style={{
+                  border: '1px solid var(--color-border)',
+                  backgroundColor: showCompleted ? 'rgba(93,107,47,.08)' : 'var(--color-surface)',
+                  boxShadow: 'var(--shadow-sm)',
+                  color: showCompleted ? 'var(--color-primary)' : 'var(--color-muted)',
+                }}
+              >
+                <CheckSquare size={14} />
+                {showCompleted ? 'Hide Completed' : 'Show Completed'}
+              </button>
+            </div>
+          </div>
+
+          {tasksLoading ? (
+            <div className="space-y-3">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-16 rounded-[16px] animate-pulse" style={{ backgroundColor: 'var(--color-border)' }} />
+              ))}
+            </div>
+          ) : tasksList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 gap-4">
+              <div className="w-16 h-16 flex items-center justify-center rounded-full" style={{ backgroundColor: 'rgba(93,107,47,.10)', color: 'var(--color-primary)' }}>
+                <CheckCircle2 size={28} />
+              </div>
+              <p className="text-[15px] font-semibold" style={{ color: 'var(--color-ink)' }}>No tasks found</p>
+              <p className="text-[13px]" style={{ color: 'var(--color-muted)' }}>Process emails in your inbox to extract action items automatically.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Pending tasks */}
+              {pending.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-widest px-1 mb-3" style={{ color: 'var(--color-muted)' }}>
+                    Pending — {pending.length}
+                  </div>
+                  {pending.map(task => (
+                    <div
+                      key={task.id}
+                      className="flex items-start justify-between gap-4 p-4 rounded-[16px] transition-all duration-200"
+                      style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-sm)'; (e.currentTarget as HTMLElement).style.transform = ''; }}
+                    >
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <button
+                          onClick={() => handleToggleTask(task.id, task.isCompleted)}
+                          className="mt-0.5 shrink-0 w-5 h-5 flex items-center justify-center rounded-full transition-all hover:scale-110"
+                          style={{ border: '2px solid var(--color-border)', backgroundColor: 'transparent' }}
+                          aria-label="Mark complete"
+                        >
+                          <span />
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium leading-snug" style={{ color: 'var(--color-ink)' }}>
+                            {task.taskDescription}
+                          </p>
+                          {task.email && (
+                            <p className="text-[11px] mt-1" style={{ color: 'var(--color-muted)' }}>
+                              From: <span className="font-semibold">{task.email.sender}</span> · {task.email.subject}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteTask(task.id)}
+                        className="shrink-0 p-1.5 rounded-lg transition-all hover:opacity-70"
+                        style={{ border: '1px solid var(--color-border)', color: 'var(--color-muted)' }}
+                        aria-label="Delete task"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Completed tasks */}
+              {showCompleted && completed.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-widest px-1 mb-3" style={{ color: 'var(--color-muted)' }}>
+                    Completed — {completed.length}
+                  </div>
+                  {completed.map(task => (
+                    <div
+                      key={task.id}
+                      className="flex items-start justify-between gap-4 p-4 rounded-[16px] opacity-50 transition-all"
+                      style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}
+                    >
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <button
+                          onClick={() => handleToggleTask(task.id, task.isCompleted)}
+                          className="mt-0.5 shrink-0 w-5 h-5 flex items-center justify-center rounded-full"
+                          style={{ border: '2px solid var(--color-primary)', backgroundColor: 'rgba(93,107,47,.10)', color: 'var(--color-primary)' }}
+                          aria-label="Mark incomplete"
+                        >
+                          <CheckCircle2 size={11} />
+                        </button>
+                        <p className="text-[13px] line-through" style={{ color: 'var(--color-muted)' }}>
+                          {task.taskDescription}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteTask(task.id)}
+                        className="shrink-0 p-1.5 rounded-lg hover:opacity-70"
+                        style={{ border: '1px solid var(--color-border)', color: 'var(--color-muted)' }}
+                        aria-label="Delete task"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </Layout>
+    );
+  }
+
+  if (activeTab === 'rules') {
+    return (
+      <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+        {toastMessage && (
+          <div
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 text-xs font-bold uppercase tracking-wider"
+            style={{ backgroundColor: 'var(--color-ink)', border: '1px solid var(--color-ink)', boxShadow: '5px 5px 0 var(--color-accent)', fontFamily: 'var(--font-body)', color: '#fff' }}
+          >
+            <Sparkles size={14} style={{ color: 'var(--color-accent)' }} />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+        <div className="space-y-6 animate-fadeIn">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5" style={{ borderBottom: '1px solid var(--color-border)' }}>
+            <div>
+              <h2 className="text-[22px] font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--color-ink)' }}>
+                <Zap size={20} style={{ color: 'var(--color-primary)' }} />
+                Routing Rules
+              </h2>
+              <p className="text-[13px] mt-1" style={{ color: 'var(--color-muted)' }}>
+                DSL-powered decision rules. Define conditions, actions, and priority routing for your inbox.
+              </p>
+            </div>
+            <button
+              className="flex items-center gap-2 px-4 py-2.5 text-[13px] font-semibold rounded-[10px] transition-all"
+              style={{
+                backgroundColor: 'var(--color-primary)',
+                color: '#fff',
+                boxShadow: '0 4px 14px rgba(93,107,47,.25)',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(93,107,47,.35)';
+                (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 14px rgba(93,107,47,.25)';
+                (e.currentTarget as HTMLElement).style.transform = '';
+              }}
+            >
+              <Plus size={14} />
+              New Rule
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {rulesList.map((rule, idx) => (
+              <div
+                key={rule.id}
+                className="p-5 rounded-[22px] transition-all duration-200"
+                style={{
+                  backgroundColor: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  boxShadow: rule.enabled ? 'var(--shadow-card)' : 'none',
+                  opacity: rule.enabled ? 1 : 0.5,
+                }}
+                onMouseEnter={e => { if (rule.enabled) { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-hover)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; } }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = rule.enabled ? 'var(--shadow-card)' : 'none'; (e.currentTarget as HTMLElement).style.transform = ''; }}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: rule.enabled ? 'rgba(93,107,47,.12)' : 'rgba(0,0,0,.06)', color: rule.enabled ? 'var(--color-primary)' : 'var(--color-muted)' }}
+                      >
+                        #{idx + 1}
+                      </span>
+                      <span className="text-[15px] font-semibold" style={{ color: 'var(--color-ink)' }}>
+                        {rule.name}
+                      </span>
+                      <span className="text-[11px] ml-auto" style={{ color: 'var(--color-muted)' }}>
+                        {rule.executions} runs
+                      </span>
+                    </div>
+                    <div className="space-y-1.5">
+                      <div className="flex items-start gap-3">
+                        <span className="text-[10px] font-bold uppercase tracking-widest shrink-0 pt-0.5 rounded" style={{ color: 'var(--color-muted)', minWidth: '40px' }}>IF</span>
+                        <code className="text-[12px] font-mono" style={{ color: 'var(--color-ink)' }}>{rule.condition}</code>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="text-[10px] font-bold uppercase tracking-widest shrink-0 pt-0.5" style={{ color: 'var(--color-muted)', minWidth: '40px' }}>THEN</span>
+                        <code className="text-[12px] font-mono" style={{ color: 'var(--color-primary)' }}>{rule.action}</code>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => setRulesList(prev => prev.map(r => r.id === rule.id ? { ...r, enabled: !r.enabled } : r))}
+                      className="px-3 py-1.5 text-[12px] font-medium rounded-full transition-all"
+                      style={{
+                        border: '1px solid var(--color-border)',
+                        backgroundColor: rule.enabled ? 'rgba(93,107,47,.10)' : 'transparent',
+                        color: rule.enabled ? 'var(--color-primary)' : 'var(--color-muted)',
+                      }}
+                    >
+                      {rule.enabled ? 'Enabled' : 'Disabled'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Rules info */}
+          <div className="p-4 flex items-start gap-3 rounded-[16px]" style={{ border: '1px solid rgba(93,107,47,.15)', backgroundColor: 'rgba(93,107,47,.04)' }}>
+            <AlertCircle size={15} className="shrink-0 mt-0.5" style={{ color: 'var(--color-primary)' }} />
+            <div>
+              <p className="text-[13px] font-semibold" style={{ color: 'var(--color-ink)' }}>Rules run on every incoming email</p>
+              <p className="text-[12px] mt-0.5" style={{ color: 'var(--color-muted)' }}>Evaluated top-to-bottom. First matching rule wins. Define custom DSL conditions in the rule editor.</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-indigo-600/95 border border-indigo-500/30 text-black font-black text-xs font-semibold shadow-2xl backdrop-blur-md animate-bounce">
-          <Sparkles size={14} className="text-amber-300" />
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-[14px] text-[13px] font-medium shadow-lg" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-hover)', color: 'var(--color-ink)' }}>
+          <Sparkles size={14} style={{ color: 'var(--color-primary)' }} />
           <span>{toastMessage}</span>
         </div>
       )}
       <div className="space-y-8 animate-fadeIn">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-black font-black flex items-center gap-2">
-              Workspace Overview{' '}
-              <Sparkles size={16} className="text-blue-600" />
+            <h2 className="text-[24px] font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--color-ink)' }}>
+              Workspace Overview
+              <Sparkles size={18} style={{ color: 'var(--color-primary)' }} />
             </h2>
-            <p className="text-xs text-gray-700 font-bold">
-              InboxOS has resolved **87** tasks today automatically. Your inbox
-              is clean.
+            <p className="text-[13px] mt-1" style={{ color: 'var(--color-muted)' }}>
+              InboxOS has resolved 87 tasks today automatically. Your inbox is clean.
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="px-4 py-2 text-xs font-semibold rounded-xl bg-white border border-black hover:bg-white border border-black shadow-[2px_2px_0_0_#111] text-gray-200 border border-black transition-all">
+            <button className="px-4 py-2 text-[13px] font-medium rounded-[10px] transition-all" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-muted)', boxShadow: 'var(--shadow-sm)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primary)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-primary)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; }}
+            >
               Diagnostics
             </button>
-            <button className="px-4 py-2 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-black font-black flex items-center gap-1.5 transition-all glow-accent">
+            <button className="px-4 py-2 text-[13px] font-semibold rounded-[10px] flex items-center gap-1.5 transition-all"
+              style={{ backgroundColor: 'var(--color-primary)', color: '#fff', boxShadow: '0 4px 14px rgba(93,107,47,.25)' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(93,107,47,.35)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 14px rgba(93,107,47,.25)'; (e.currentTarget as HTMLElement).style.transform = ''; }}
+            >
               <Play size={12} fill="currentColor" />
               <span>Run Pipeline</span>
             </button>

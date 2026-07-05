@@ -79,102 +79,101 @@ export const EmailRow = React.memo(function EmailRow({
     }
   }, [rawDate]);
 
-  // Neubrutalism: solid fill + black border, 0 radius
+  // Premium soft badge styles — no harsh black borders
   const getCategoryStyle = (cat: string): React.CSSProperties => {
     switch (cat) {
-      case 'urgent':   return { backgroundColor: '#E85C4A', color: '#fff', border: '1px solid #111' };
-      case 'job':      return { backgroundColor: '#A855F7', color: '#fff', border: '1px solid #111' };
-      case 'finance':  return { backgroundColor: '#4CAF6D', color: '#fff', border: '1px solid #111' };
-      case 'meeting':  return { backgroundColor: '#6EC6E8', color: '#111', border: '1px solid #111' };
-      case 'otp':      return { backgroundColor: '#F4C542', color: '#111', border: '1px solid #111' };
-      case 'newsletter': return { backgroundColor: '#999', color: '#fff', border: '1px solid #111' };
-      case 'support':  return { backgroundColor: '#6EC6E8', color: '#111', border: '1px solid #111' };
-      case 'academic': return { backgroundColor: '#3B4CCA', color: '#fff', border: '1px solid #111' };
-      case 'work':     return { backgroundColor: '#3B4CCA', color: '#fff', border: '1px solid #111' };
-      default:         return { backgroundColor: '#F4C542', color: '#111', border: '1px solid #111' };
+      case 'urgent':     return { backgroundColor: 'rgba(217,104,87,.12)', color: '#D96857' };
+      case 'job':        return { backgroundColor: 'rgba(139,92,246,.12)', color: '#7C3AED' };
+      case 'finance':    return { backgroundColor: 'rgba(63,167,106,.12)', color: '#3FA76A' };
+      case 'meeting':    return { backgroundColor: 'rgba(59,130,246,.10)', color: '#3B82F6' };
+      case 'otp':        return { backgroundColor: 'rgba(217,164,65,.12)', color: '#D9A441' };
+      case 'newsletter': return { backgroundColor: 'rgba(112,112,112,.10)', color: '#707070' };
+      case 'support':    return { backgroundColor: 'rgba(59,130,246,.10)', color: '#3B82F6' };
+      case 'academic':   return { backgroundColor: 'rgba(93,107,47,.12)', color: '#5D6B2F' };
+      case 'work':       return { backgroundColor: 'rgba(93,107,47,.12)', color: '#5D6B2F' };
+      default:           return { backgroundColor: 'rgba(228,184,92,.12)', color: '#C49030' };
     }
   };
 
   const getPriorityStyle = (score: number): React.CSSProperties => {
-    if (score > 85) return { backgroundColor: '#E85C4A', color: '#fff', border: '1px solid #111' };
-    if (score > 65) return { backgroundColor: '#F4C542', color: '#111', border: '1px solid #111' };
-    return { backgroundColor: '#eee', color: '#555', border: '1px solid #aaa' };
+    if (score > 85) return { backgroundColor: 'rgba(217,104,87,.12)', color: '#D96857' };
+    if (score > 65) return { backgroundColor: 'rgba(217,164,65,.12)', color: '#D9A441' };
+    return { backgroundColor: 'rgba(112,112,112,.08)', color: '#9E9585' };
   };
 
   return (
     <div
       onClick={() => onClick?.(email.id)}
-      className="p-4 cursor-pointer flex gap-4 transition-all duration-150"
+      className="px-4 py-3.5 cursor-pointer flex gap-4 transition-all duration-200 rounded-[16px]"
       style={{
-        backgroundColor: isUnread ? '#FFFDF5' : 'var(--color-surface)',
+        backgroundColor: 'var(--color-surface)',
         border: isUnread
-          ? '1px solid var(--color-ink)'
-          : '1px solid var(--color-ink)',
-        boxShadow: isUnread
-          ? 'var(--shadow-offset)'
-          : 'var(--shadow-offset-sm)',
+          ? '1px solid rgba(93,107,47,.20)'
+          : '1px solid var(--color-border)',
+        boxShadow: isUnread ? '0 2px 12px rgba(93,107,47,.08)' : 'var(--shadow-sm)',
         marginBottom: '6px',
       }}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-hover)';
-        (e.currentTarget as HTMLElement).style.transform = 'translate(1px,1px)';
+        (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)';
+        (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(93,107,47,.25)';
       }}
       onMouseLeave={e => {
         const el = e.currentTarget as HTMLElement;
-        el.style.boxShadow = isUnread ? 'var(--shadow-offset)' : 'var(--shadow-offset-sm)';
+        el.style.boxShadow = isUnread ? '0 2px 12px rgba(93,107,47,.08)' : 'var(--shadow-sm)';
         el.style.transform = '';
+        el.style.borderColor = isUnread ? 'rgba(93,107,47,.20)' : 'var(--color-border)';
       }}
     >
-      {/* Unread indicator strip */}
-      <div className="flex flex-col justify-center items-center shrink-0 w-3">
+      {/* Unread indicator */}
+      <div className="flex flex-col justify-center items-center shrink-0 w-2">
         {isUnread ? (
           <span
-            className="h-3 w-3"
-            style={{ backgroundColor: 'var(--color-accent-cta)', border: '1px solid var(--color-ink)' }}
+            className="h-2 w-2 rounded-full"
+            style={{ backgroundColor: 'var(--color-primary)' }}
           />
         ) : (
           <span
-            className="h-2.5 w-2.5"
-            style={{ backgroundColor: '#ddd', border: '1px solid #bbb' }}
+            className="h-2 w-2 rounded-full"
+            style={{ backgroundColor: 'var(--color-border)' }}
           />
         )}
       </div>
 
-      {/* ── Main Row Metadata ─────────────────────────────────────────────────── */}
+      {/* ── Main Row Metadata ───────────────────────────────────────── */}
       <div className="flex-1 min-w-0">
         {/* Row Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1.5 md:gap-4 mb-2">
-          <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-3 min-w-0 flex-1">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1 md:gap-4 mb-1.5">
+          <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2.5 min-w-0 flex-1">
             <div className="flex items-center justify-between md:justify-start gap-2 min-w-0">
               <div className="flex items-center gap-2 min-w-0">
                 <span
-                  className="text-xs truncate"
+                  className="text-[13px] truncate"
                   style={{
-                    fontWeight: isUnread ? 800 : 600,
-                    fontFamily: 'var(--font-body)',
+                    fontWeight: isUnread ? 700 : 500,
                     color: 'var(--color-ink)',
                   }}
                 >
                   {senderName}
                 </span>
                 <span
-                  className="text-[10px] truncate hidden sm:inline"
-                  style={{ color: '#666', fontFamily: 'var(--font-mono)' }}
+                  className="text-[11px] truncate hidden sm:inline"
+                  style={{ color: 'var(--color-muted)', fontFamily: 'var(--font-mono)' }}
                 >
                   &lt;{senderEmail}&gt;
                 </span>
               </div>
 
               {/* Mobile-only Date/Score */}
-              <div className="flex items-center gap-2 md:hidden shrink-0">
+              <div className="flex items-center gap-1.5 md:hidden shrink-0">
                 <span
-                  className="text-[10px]"
-                  style={{ color: '#777', fontFamily: 'var(--font-mono)' }}
+                  className="text-[11px]"
+                  style={{ color: 'var(--color-muted)' }}
                 >
                   {displayDate}
                 </span>
                 <span
-                  className="text-[9px] px-1.5 py-0.5 font-bold"
+                  className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold"
                   style={getPriorityStyle(priorityScore)}
                 >
                   {priorityScore}
@@ -182,67 +181,66 @@ export const EmailRow = React.memo(function EmailRow({
               </div>
             </div>
 
-            <span className="hidden md:inline" style={{ color: '#aaa', fontSize: 10 }}>•</span>
+            <span className="hidden md:inline" style={{ color: 'var(--color-border)', fontSize: 10 }}>•</span>
 
             {/* Subject */}
             <h4
-              className="text-xs truncate"
+              className="text-[13px] truncate"
               style={{
-                fontWeight: isUnread ? 700 : 500,
-                color: 'var(--color-ink)',
-                fontFamily: 'var(--font-body)',
+                fontWeight: isUnread ? 600 : 400,
+                color: isUnread ? 'var(--color-ink)' : 'var(--color-muted)',
               }}
             >
               {subject}
             </h4>
           </div>
 
-          {/* Desktop-only Date & Score */}
-          <div className="hidden md:flex items-center gap-2.5 shrink-0">
+          {/* Desktop Date & Score */}
+          <div className="hidden md:flex items-center gap-2 shrink-0">
             <span
-              className="text-[10px]"
-              style={{ color: '#777', fontFamily: 'var(--font-mono)' }}
+              className="text-[11px]"
+              style={{ color: 'var(--color-muted)' }}
             >
               {displayDate}
             </span>
             {email.similarity !== undefined && (
               <span
-                className="text-[9px] px-1.5 py-0.5 font-bold"
-                style={{ backgroundColor: 'var(--color-success)', color: '#fff', border: '1px solid #111' }}
+                className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                style={{ backgroundColor: 'rgba(63,167,106,.12)', color: 'var(--color-success)' }}
               >
                 {(email.similarity * 100).toFixed(0)}% Match
               </span>
             )}
             <span
-              className="text-[9px] px-1.5 py-0.5 font-bold"
+              className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
               style={getPriorityStyle(priorityScore)}
             >
-              Score: {priorityScore}
+              {priorityScore}
             </span>
           </div>
         </div>
 
         {/* Summary preview */}
         <p
-          className="text-[11px] leading-normal line-clamp-2 pr-4 mb-3"
-          style={{ color: '#555', fontFamily: 'var(--font-body)' }}
+          className="text-[12px] leading-relaxed line-clamp-2 pr-4 mb-2.5"
+          style={{ color: 'var(--color-muted)' }}
         >
           {summary}
         </p>
 
         {/* Row Footer: badges */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span
-              className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5"
+              className="text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full"
               style={getCategoryStyle(category)}
             >
               {category}
             </span>
             {priorityScore > 85 && (
               <span
-                className="text-[9px] font-bold px-2 py-0.5 flex items-center gap-1"
-                style={{ backgroundColor: '#E85C4A', color: '#fff', border: '1px solid #111' }}
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1"
+                style={{ backgroundColor: 'rgba(217,104,87,.12)', color: '#D96857' }}
               >
                 <ShieldAlert size={9} />
                 <span>Urgent</span>
@@ -250,7 +248,7 @@ export const EmailRow = React.memo(function EmailRow({
             )}
           </div>
 
-          <div style={{ color: '#999' }}>
+          <div style={{ color: 'var(--color-muted)', opacity: 0.6 }}>
             {isUnread ? <Mail size={12} /> : <MailOpen size={12} />}
           </div>
         </div>

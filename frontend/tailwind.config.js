@@ -22,6 +22,18 @@ export default {
         'bg-base':     '#F5EFDC',
         'bg-elevated': '#FFFFFF',
         'accent':      '#F4C542',
+        // Landing Page Redesign palette
+        'lp-primary':         '#5B4DFF',
+        'lp-primary-hover':   '#4B3EF0',
+        'lp-accent':          '#7C6BFF',
+        'lp-success':         '#22C55E',
+        'lp-danger':          '#EF4444',
+        'lp-warning':         '#F59E0B',
+        'lp-bg':              '#FCFCFE',
+        'lp-bg-secondary':    '#F7F8FC',
+        'lp-border':          '#E6E8F0',
+        'lp-text-primary':    '#111827',
+        'lp-text-secondary':  '#6B7280',
       },
       fontFamily: {
         display: ['"Archivo Black"', '"Arial Black"', 'sans-serif'],

@@ -2,30 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Neubrutalism Design System Tokens ─────────────────────────────────── */
+/* ── Premium Enterprise SaaS Design Tokens ─────────────────────────────── */
 @layer base {
   :root {
     /* Colors */
-    --color-bg:         #F5F2E8;   /* warm cream */
-    --color-surface:    #FFFFFF;   /* pure white card */
-    --color-ink:        #111111;   /* near-black text/border */
-    --color-accent:     #FFE34D;   /* yellow highlight */
-    --color-accent-cta: #2563EB;   /* blue CTA */
-    --color-success:    #16A34A;   /* green */
-    --color-danger:     #DC2626;   /* red */
-    --color-pending:    #D97706;   /* amber */
-    --color-info:       #7C3AED;   /* purple */
+    --color-bg:       #F8F6F1;   /* warm off-white page background */
+    --color-surface:  #FFFFFF;   /* white card / panel surface */
+    --color-border:   #E9E4D8;   /* subtle warm border */
+    --color-ink:      #1E1E1E;   /* primary text */
+    --color-muted:    #707070;   /* secondary / helper text */
+
+    /* Brand */
+    --color-primary:  #5D6B2F;   /* Olive Green — CTAs, active states */
+    --color-accent:   #E4B85C;   /* Warm Gold — badges, highlights */
+
+    /* Semantic */
+    --color-success:  #3FA76A;   /* green */
+    --color-warning:  #D9A441;   /* amber */
+    --color-danger:   #D96857;   /* red */
+    --color-info:     #5B72B8;   /* blue-violet */
 
     /* Typography */
-    --font-display: 'Archivo Black', 'Archivo', sans-serif;
-    --font-body:    'Inter', 'Archivo', sans-serif;
+    --font-display: 'Inter', sans-serif;
+    --font-body:    'Inter', sans-serif;
     --font-mono:    'JetBrains Mono', 'Courier New', monospace;
 
-    /* Offset Shadows */
-    --shadow-offset:       6px 6px 0 var(--color-ink);
-    --shadow-offset-sm:    4px 4px 0 var(--color-ink);
-    --shadow-offset-hover: 8px 8px 0 var(--color-ink);
-    --shadow-offset-xs:    2px 2px 0 var(--color-ink);
+    /* Geometry */
+    --radius-card:  22px;
+    --radius-panel: 16px;
+    --radius-btn:   10px;
+    --radius-input: 10px;
+    --radius-badge: 100px;
+
+    /* Shadows */
+    --shadow-card:     0 4px 24px rgba(0,0,0,.06);
+    --shadow-hover:    0 12px 40px rgba(0,0,0,.10);
+    --shadow-sm:       0 2px 12px rgba(0,0,0,.05);
+    --shadow-inset:    inset 0 1px 3px rgba(0,0,0,.04);
+
+    /* Legacy aliases kept to avoid breaking anything still using them */
+    --shadow-offset:       none;
+    --shadow-offset-sm:    none;
+    --shadow-offset-hover: none;
+    --shadow-offset-xs:    none;
+    --color-accent-cta:    #5D6B2F;
+    --color-pending:       #D9A441;
   }
 
   body {
@@ -35,172 +56,163 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
-    /* dot-grid background pattern */
-    background-image: radial-gradient(circle, rgba(0,0,0,0.07) 1px, transparent 1px);
-    background-size: 20px 20px;
   }
 
-  * {
-    border-radius: 0 !important;
+  body.landing-page-active {
+    background-color: #FAF7F2 !important;
+    color: #1D1D1D !important;
+    font-family: 'Inter', sans-serif !important;
+    --avatar-border: #EAE5DA;
+    --avatar-font: 'Inter', sans-serif;
+  }
+
+  /* Engineering grid helper for landing page */
+  .engineering-grid {
+    background-image:
+      linear-gradient(to right, rgba(95, 107, 56, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(95, 107, 56, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse at center, black, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black, transparent 75%);
   }
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────────── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #e8e3d4;
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-ink);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #444;
-}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #F0EDE6; border-radius: 99px; }
+::-webkit-scrollbar-thumb { background: #C9C2B2; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #9E9585; }
 
-/* ── Neubrutalism component classes ────────────────────────────────────── */
+/* ── Component Classes ──────────────────────────────────────────────────── */
 @layer components {
-  /* Card */
+
+  /* ── Cards ── */
   .neu-card {
     background-color: var(--color-surface);
-    border: 3px solid var(--color-ink);
-    box-shadow: var(--shadow-offset);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
   }
-
   .neu-card-sm {
     background-color: var(--color-surface);
-    border: 2px solid var(--color-ink);
-    box-shadow: var(--shadow-offset-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-sm);
   }
 
-  /* Input */
+  /* ── Inputs ── */
   .neu-input {
     background-color: var(--color-surface);
-    border: 3px solid var(--color-ink);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-input);
     color: var(--color-ink);
     font-family: var(--font-body);
     font-size: 13px;
     padding: 10px 14px;
     outline: none;
-    transition: box-shadow 0.1s ease, transform 0.1s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .neu-input:focus {
-    box-shadow: var(--shadow-offset-sm);
-    transform: translate(-1px, -1px);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(93,107,47,.10);
   }
   .neu-input::placeholder {
-    color: #aaa;
+    color: #B5AFA4;
   }
 
-  /* Button - primary */
+  /* ── Buttons ── */
   .neu-btn {
     background-color: var(--color-surface);
-    border: 3px solid var(--color-ink);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-btn);
     color: var(--color-ink);
     font-family: var(--font-body);
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    box-shadow: var(--shadow-offset-sm);
-    transition: box-shadow 0.1s ease, transform 0.1s ease;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
     cursor: pointer;
   }
   .neu-btn:hover {
-    box-shadow: none;
-    transform: translate(4px, 4px);
-  }
-  .neu-btn:active {
-    box-shadow: none;
-    transform: translate(4px, 4px);
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-card);
+    transform: translateY(-1px);
   }
 
-  /* Button - accent (yellow fill) */
   .neu-btn-accent {
-    background-color: var(--color-accent);
-    border: 3px solid var(--color-ink);
-    color: var(--color-ink);
+    background-color: var(--color-primary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-btn);
+    color: #FFFFFF;
     font-family: var(--font-body);
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    box-shadow: var(--shadow-offset-sm);
-    transition: box-shadow 0.1s ease, transform 0.1s ease;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    box-shadow: 0 4px 14px rgba(93,107,47,.25);
+    transition: box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
     cursor: pointer;
   }
   .neu-btn-accent:hover {
-    box-shadow: none;
-    transform: translate(4px, 4px);
+    box-shadow: 0 6px 20px rgba(93,107,47,.35);
+    transform: translateY(-1px);
   }
 
-  /* Button - CTA (blue) */
   .neu-btn-cta {
-    background-color: var(--color-accent-cta);
-    border: 3px solid var(--color-ink);
+    background-color: var(--color-primary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-btn);
     color: #fff;
     font-family: var(--font-body);
-    font-weight: 700;
-    font-size: 12px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    box-shadow: var(--shadow-offset-sm);
-    transition: box-shadow 0.1s ease, transform 0.1s ease;
+    font-weight: 600;
+    font-size: 13px;
+    box-shadow: 0 4px 14px rgba(93,107,47,.25);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
     cursor: pointer;
   }
   .neu-btn-cta:hover {
-    box-shadow: none;
-    transform: translate(4px, 4px);
+    box-shadow: 0 6px 20px rgba(93,107,47,.35);
+    transform: translateY(-1px);
   }
 
-  /* Badge */
+  /* ── Badge ── */
   .neu-badge {
-    border: 2px solid var(--color-ink);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-badge);
     font-family: var(--font-body);
-    font-weight: 700;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 2px 8px;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    padding: 2px 10px;
   }
 
-  /* Section divider */
+  /* ── Divider ── */
   .neu-divider {
     border: 0;
-    border-top: 3px solid var(--color-ink);
+    border-top: 1px solid var(--color-border);
   }
 
-  /* Glass overrides — neutralize glassmorphism */
+  /* Glass — preserve for landing page */
   .glass,
   .glass-panel,
   .glass-hover {
-    background: var(--color-surface) !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-  .glass {
-    border: 3px solid var(--color-ink) !important;
-    box-shadow: var(--shadow-offset) !important;
-  }
-  .glass-panel {
-    border: 2px solid var(--color-ink) !important;
-    box-shadow: var(--shadow-offset-sm) !important;
+    background: rgba(255,255,255,0.7) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
   }
 
-  /* Glow effect override */
+  /* Glow — olive glow for primary actions */
   .glow-accent,
   .glow-accent-hover:hover {
-    box-shadow: var(--shadow-offset-sm) !important;
+    box-shadow: 0 4px 18px rgba(93,107,47,.30) !important;
   }
 
-  /* Prose override for email body */
+  /* Prose */
   .prose {
     color: var(--color-ink) !important;
   }
   .prose a {
-    color: var(--color-accent-cta) !important;
+    color: var(--color-primary) !important;
   }
   .prose strong {
     color: var(--color-ink) !important;
@@ -209,20 +221,29 @@
 
 /* ── Animations ─────────────────────────────────────────────────────────── */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .animate-fadeIn {
-  animation: fadeIn 0.25s ease forwards;
+  animation: fadeIn 0.3s cubic-bezier(0.2,0.8,0.3,1) forwards;
 }
 
-/* Force checkbox/select appearance */
+/* ── Form Elements ──────────────────────────────────────────────────────── */
 input[type="checkbox"] {
-  accent-color: var(--color-ink);
+  accent-color: var(--color-primary);
+  border-radius: 4px;
 }
 select {
   background-color: var(--color-surface) !important;
-  border: 2px solid var(--color-ink) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-input) !important;
   color: var(--color-ink) !important;
   outline: none;
+  font-family: var(--font-body);
+  padding: 8px 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+select:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(93,107,47,.10) !important;
 }

@@ -15,6 +15,31 @@ import {
   ArrowRight,
 } from 'lucide-react';
 
+const GoogleIcon = () => (
+  <svg
+    className="w-[18px] h-[18px]"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      fill="#4285F4"
+    />
+    <path
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      fill="#34A853"
+    />
+    <path
+      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+      fill="#FBBC05"
+    />
+    <path
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+      fill="#EA4335"
+    />
+  </svg>
+);
+
 export const RegisterForm: React.FC = () => {
   const { register, loginWithFirebase, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
@@ -52,17 +77,35 @@ export const RegisterForm: React.FC = () => {
 
   const validate = () => {
     let isValid = true;
-    if (!email) { setEmailError('Email is required'); isValid = false; }
-    else if (!/\S+@\S+\.\S+/.test(email)) { setEmailError('Please enter a valid email address'); isValid = false; }
-    else { setEmailError(null); }
+    if (!email) {
+      setEmailError('Email is required');
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Please enter a valid email address');
+      isValid = false;
+    } else {
+      setEmailError(null);
+    }
 
-    if (!password) { setPasswordError('Password is required'); isValid = false; }
-    else if (password.length < 6) { setPasswordError('Password must be at least 6 characters'); isValid = false; }
-    else { setPasswordError(null); }
+    if (!password) {
+      setPasswordError('Password is required');
+      isValid = false;
+    } else if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      isValid = false;
+    } else {
+      setPasswordError(null);
+    }
 
-    if (!confirmPassword) { setConfirmPasswordError('Please confirm your password'); isValid = false; }
-    else if (password !== confirmPassword) { setConfirmPasswordError('Passwords do not match'); isValid = false; }
-    else { setConfirmPasswordError(null); }
+    if (!confirmPassword) {
+      setConfirmPasswordError('Please confirm your password');
+      isValid = false;
+    } else if (password !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match');
+      isValid = false;
+    } else {
+      setConfirmPasswordError(null);
+    }
 
     return isValid;
   };
@@ -82,178 +125,31 @@ export const RegisterForm: React.FC = () => {
     }
   };
 
-  const inputStyle = (hasError?: boolean): React.CSSProperties => ({
-    width: '100%',
-    backgroundColor: 'var(--color-surface)',
-    border: `1px solid ${hasError ? 'var(--color-danger)' : 'var(--color-ink)'}`,
-    color: 'var(--color-ink)',
-    fontFamily: 'var(--font-body)',
-    fontSize: '13px',
-    padding: '10px 14px',
-    outline: 'none',
-    boxShadow: hasError ? '3px 3px 0 var(--color-danger)' : undefined,
-  });
-
   return (
     <AuthLayout>
-      <div className="w-full space-y-5">
+      <div className="w-full space-y-6 text-left">
         {/* Welcome */}
-        <div className="space-y-2 text-left">
-          <h3
-            className="text-2xl font-black tracking-tight flex items-center gap-2"
-            style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}
-          >
-            Create Account <UserCheck size={18} style={{ color: 'var(--color-accent-cta)' }} />
+        <div className="space-y-1.5 pb-2">
+          <h3 className="text-[36px] font-bold text-[#1D1D1D] tracking-tight leading-none flex items-center gap-2.5">
+            Create Account <UserCheck size={24} className="text-[#5F6B38]" />
           </h3>
-          <p className="text-xs" style={{ color: '#666', fontFamily: 'var(--font-body)' }}>
+          <p className="text-[16px] text-[#6B7280]">
             Join the AI Inbox Operating System.
           </p>
         </div>
 
-        {/* Auth Error */}
-        {authError && (
-          <div
-            className="flex items-center gap-3 p-3.5 text-xs text-left"
-            style={{ backgroundColor: '#FFF0F0', border: '1px solid var(--color-danger)', color: 'var(--color-danger)', boxShadow: '3px 3px 0 var(--color-danger)' }}
-          >
-            <AlertCircle size={14} className="shrink-0" />
-            <p className="leading-snug">{authError}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email */}
-          <div className="space-y-1.5 text-left">
-            <label className="text-[10px] font-bold uppercase tracking-widest block" style={{ color: '#444', fontFamily: 'var(--font-body)' }}>
-              Email Address
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-3" style={{ color: '#777' }}><Mail size={15} /></span>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(null); }}
-                disabled={isLoading}
-                style={{ ...inputStyle(!!emailError), paddingLeft: '36px' }}
-              />
-            </div>
-            {emailError && (
-              <p className="text-[10px] flex items-center gap-1.5 mt-1 font-bold pl-1" style={{ color: 'var(--color-danger)' }}>
-                <AlertCircle size={10} /><span>{emailError}</span>
-              </p>
-            )}
-          </div>
-
-          {/* Password */}
-          <div className="space-y-1.5 text-left">
-            <label className="text-[10px] font-bold uppercase tracking-widest block" style={{ color: '#444', fontFamily: 'var(--font-body)' }}>
-              Password
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-3" style={{ color: '#777' }}><Lock size={15} /></span>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Minimum 6 characters"
-                value={password}
-                onKeyDown={handleKeyDown}
-                onChange={(e) => { setPassword(e.target.value); if (passwordError) setPasswordError(null); }}
-                disabled={isLoading}
-                style={{ ...inputStyle(!!passwordError), paddingLeft: '36px', paddingRight: '44px' }}
-              />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} tabIndex={-1} className="absolute right-3 top-3" style={{ color: '#777' }}>
-                {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
-
-            {/* Password Strength */}
-            {password && (
-              <div className="space-y-1 mt-2">
-                <div className="flex justify-between text-[9px] font-bold" style={{ color: '#666' }}>
-                  <span>Strength: {strength.label}</span>
-                </div>
-                <div className="flex gap-1">
-                  {[1, 2, 3].map((level) => (
-                    <div key={level} className="h-2 flex-1 transition-all duration-300" style={{ backgroundColor: strength.score >= level ? strength.colorBg : '#ddd', border: '1.5px solid var(--color-ink)' }} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {isCapsLockOn && (
-              <p className="text-[9px] flex items-center gap-1.5 mt-1 font-bold pl-1 uppercase" style={{ color: 'var(--color-pending)' }}>
-                <AlertCircle size={9} /><span>Warning: Caps Lock is On</span>
-              </p>
-            )}
-            {passwordError && (
-              <p className="text-[10px] flex items-center gap-1.5 mt-1 font-bold pl-1" style={{ color: 'var(--color-danger)' }}>
-                <AlertCircle size={10} /><span>{passwordError}</span>
-              </p>
-            )}
-          </div>
-
-          {/* Confirm Password */}
-          <div className="space-y-1.5 text-left">
-            <label className="text-[10px] font-bold uppercase tracking-widest block" style={{ color: '#444', fontFamily: 'var(--font-body)' }}>
-              Confirm Password
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-3" style={{ color: '#777' }}><Lock size={15} /></span>
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Confirm password"
-                value={confirmPassword}
-                onKeyDown={handleKeyDown}
-                onChange={(e) => { setConfirmPassword(e.target.value); if (confirmPasswordError) setConfirmPasswordError(null); }}
-                disabled={isLoading}
-                style={{ ...inputStyle(!!confirmPasswordError), paddingLeft: '36px', paddingRight: '44px' }}
-              />
-              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} tabIndex={-1} className="absolute right-3 top-3" style={{ color: '#777' }}>
-                {showConfirmPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
-            </div>
-            {confirmPasswordError && (
-              <p className="text-[10px] flex items-center gap-1.5 mt-1 font-bold pl-1" style={{ color: 'var(--color-danger)' }}>
-                <AlertCircle size={10} /><span>{confirmPasswordError}</span>
-              </p>
-            )}
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full flex items-center justify-center gap-1.5 px-4 py-3 font-bold text-xs uppercase tracking-wider transition-all disabled:opacity-50 disabled:pointer-events-none mt-2 min-h-[44px]"
-            style={{ backgroundColor: 'var(--color-accent-cta)', border: '1px solid var(--color-ink)', color: '#fff', boxShadow: 'var(--shadow-offset)', fontFamily: 'var(--font-body)' }}
-            onMouseEnter={e => {
-              if (!isLoading) {
-                (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-hover)';
-                (e.currentTarget as HTMLElement).style.transform = 'translate(3px,3px)';
-              }
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset)';
-              (e.currentTarget as HTMLElement).style.transform = '';
-            }}
-          >
-            {isLoading ? <><Loader2 size={14} className="animate-spin" /><span>Creating Account...</span></> : <><span>Create Account</span><ArrowRight size={13} /></>}
-          </button>
-        </form>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1" style={{ borderTop: '1px solid var(--color-ink)' }} />
-          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#888', fontFamily: 'var(--font-body)' }}>or</span>
-          <div className="flex-1" style={{ borderTop: '1px solid var(--color-ink)' }} />
-        </div>
-
-        {/* Google */}
+        {/* Google Authentication (Redesigned White Button) */}
         <button
           type="button"
           onClick={async () => {
             if (!isFirebaseConfigured) {
               setIsLoading(true);
-              setTimeout(() => { setIsLoading(false); register('demo@inboxos.dev', 'password123').then(() => navigate('/dashboard')); }, 1000);
+              setTimeout(() => {
+                setIsLoading(false);
+                register('demo@inboxos.dev', 'password123').then(() =>
+                  navigate('/dashboard')
+                );
+              }, 1000);
               return;
             }
             setIsLoading(true);
@@ -268,25 +164,227 @@ export const RegisterForm: React.FC = () => {
               setIsLoading(false);
             }
           }}
-          className="w-full flex items-center justify-center gap-2.5 px-4 py-3 font-bold text-xs uppercase tracking-wider transition-all min-h-[44px]"
-          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-ink)', color: 'var(--color-ink)', boxShadow: 'var(--shadow-offset)', fontFamily: 'var(--font-body)' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset-hover)'; (e.currentTarget as HTMLElement).style.transform = 'translate(3px,3px)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-offset)'; (e.currentTarget as HTMLElement).style.transform = ''; }}
+          className="w-full h-[54px] flex items-center justify-center gap-3 bg-white border border-[#EAE5DA] rounded-[16px] text-[#1D1D1D] text-[15px] font-semibold transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] hover:bg-[#FAF7F2]"
         >
-          <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" fill="#FFC107" />
-            <path d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" fill="#FF3D00" />
-            <path d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" fill="#4CAF50" />
-            <path d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" fill="#1976D2" />
-          </svg>
-          Continue with Google
+          <GoogleIcon />
+          <span>Continue with Google</span>
         </button>
 
+        {/* Divider */}
+        <div className="flex items-center gap-4 py-2">
+          <div className="flex-grow border-t border-[#EAE5DA]" />
+          <span className="text-[11px] font-bold uppercase tracking-widest text-[#9CA3AF]">
+            OR
+          </span>
+          <div className="flex-grow border-t border-[#EAE5DA]" />
+        </div>
+
+        {/* Auth Error Alert */}
+        {authError && (
+          <div className="flex items-center gap-3 p-4 bg-[#FFF0F0] border border-[#FCA5A5] rounded-[14px] text-[#EF4444] text-xs">
+            <AlertCircle size={16} className="shrink-0 text-[#EF4444]" />
+            <p className="leading-snug font-medium">{authError}</p>
+          </div>
+        )}
+
+        {/* Signup Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Email */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#374151] tracking-wide block">
+              Email Address
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]">
+                <Mail size={16} strokeWidth={1.5} />
+              </span>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) setEmailError(null);
+                }}
+                disabled={isLoading}
+                className={`w-full h-[54px] pl-11 pr-4 text-[15px] bg-[#FCFCFE] border rounded-[14px] text-[#1D1D1D] placeholder-[#9CA3AF] outline-none transition-all duration-200 ${
+                  emailError
+                    ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-4 focus:ring-[#EF4444]/10'
+                    : 'border-[#EAE5DA] focus:border-[#5F6B38] focus:ring-4 focus:ring-[#5F6B38]/10'
+                }`}
+              />
+            </div>
+            {emailError && (
+              <p className="text-[11px] flex items-center gap-1.5 mt-1 font-semibold text-[#EF4444] pl-1">
+                <AlertCircle size={11} />
+                <span>{emailError}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#374151] tracking-wide block">
+              Password
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]">
+                <Lock size={16} strokeWidth={1.5} />
+              </span>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Minimum 6 characters"
+                value={password}
+                onKeyDown={handleKeyDown}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (passwordError) setPasswordError(null);
+                }}
+                disabled={isLoading}
+                className={`w-full h-[54px] pl-11 pr-12 text-[15px] bg-[#FCFCFE] border rounded-[14px] text-[#1D1D1D] placeholder-[#9CA3AF] outline-none transition-all duration-200 ${
+                  passwordError
+                    ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-4 focus:ring-[#EF4444]/10'
+                    : 'border-[#EAE5DA] focus:border-[#5F6B38] focus:ring-4 focus:ring-[#5F6B38]/10'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#1D1D1D] transition-colors"
+              >
+                {showPassword ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
+              </button>
+            </div>
+
+            {/* Password Strength Indicator */}
+            {password && (
+              <div className="space-y-1.5 mt-2.5">
+                <div className="flex justify-between text-[10px] font-bold text-[#6B7280]">
+                  <span>Password Strength</span>
+                  <span
+                    className="font-semibold"
+                    style={{
+                      color:
+                        strength.colorBg === 'var(--color-danger)'
+                          ? '#EF4444'
+                          : strength.colorBg === 'var(--color-pending)'
+                          ? '#F59E0B'
+                          : '#22C55E',
+                    }}
+                  >
+                    {strength.label}
+                  </span>
+                </div>
+                <div className="flex gap-1.5">
+                  {[1, 2, 3].map((level) => {
+                    const color =
+                      strength.colorBg === 'var(--color-danger)'
+                        ? '#EF4444'
+                        : strength.colorBg === 'var(--color-pending)'
+                        ? '#F59E0B'
+                        : '#22C55E';
+                    return (
+                      <div
+                        key={level}
+                        className="h-1.5 flex-1 rounded-full transition-all duration-300"
+                        style={{
+                          backgroundColor: strength.score >= level ? color : '#EAE5DA',
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {isCapsLockOn && (
+              <p className="text-[10px] flex items-center gap-1.5 mt-1 font-semibold text-[#F59E0B] pl-1">
+                <AlertCircle size={10} />
+                <span>Caps Lock is On</span>
+              </p>
+            )}
+            {passwordError && (
+              <p className="text-[11px] flex items-center gap-1.5 mt-1 font-semibold text-[#EF4444] pl-1">
+                <AlertCircle size={11} />
+                <span>{passwordError}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Confirm Password */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-[#374151] tracking-wide block">
+              Confirm Password
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]">
+                <Lock size={16} strokeWidth={1.5} />
+              </span>
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder="Confirm password"
+                value={confirmPassword}
+                onKeyDown={handleKeyDown}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (confirmPasswordError) setConfirmPasswordError(null);
+                }}
+                disabled={isLoading}
+                className={`w-full h-[54px] pl-11 pr-12 text-[15px] bg-[#FCFCFE] border rounded-[14px] text-[#1D1D1D] placeholder-[#9CA3AF] outline-none transition-all duration-200 ${
+                  confirmPasswordError
+                    ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-4 focus:ring-[#EF4444]/10'
+                    : 'border-[#EAE5DA] focus:border-[#5F6B38] focus:ring-4 focus:ring-[#5F6B38]/10'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                tabIndex={-1}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#1D1D1D] transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
+              </button>
+            </div>
+            {confirmPasswordError && (
+              <p className="text-[11px] flex items-center gap-1.5 mt-1 font-semibold text-[#EF4444] pl-1">
+                <AlertCircle size={11} />
+                <span>{confirmPasswordError}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full h-[54px] flex items-center justify-center gap-2 bg-[#5F6B38] hover:bg-[#4F5A2F] text-white text-[15px] font-semibold rounded-[16px] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_25px_rgba(95,107,56,0.25)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none mt-4"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 size={16} className="animate-spin text-white" />
+                <span>Creating Account...</span>
+              </>
+            ) : (
+              <>
+                <span>Create Account</span>
+                <ArrowRight size={15} strokeWidth={2} />
+              </>
+            )}
+          </button>
+        </form>
+
         {/* Footer */}
-        <div className="text-center pt-4 text-[10px] font-semibold" style={{ borderTop: '1px solid var(--color-ink)', color: '#666', fontFamily: 'var(--font-body)' }}>
-          <p>Join thousands of users running email as an operating system.</p>
-          <Link to="/login" onClick={clearError} className="font-bold uppercase tracking-wider mt-1 block transition-colors" style={{ color: 'var(--color-accent-cta)' }}>
-            Sign In →
+        <div className="text-center pt-5 border-t border-[#EAE5DA] mt-3">
+          <p className="text-xs text-[#6B7280]">
+            Join thousands of users running email as an operating system.
+          </p>
+          <Link
+            to="/login"
+            onClick={clearError}
+            className="text-xs font-semibold text-[#5F6B38] hover:underline mt-2 block"
+          >
+            Sign In
           </Link>
         </div>
       </div>

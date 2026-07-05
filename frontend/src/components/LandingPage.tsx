@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Avatar } from './Avatar';
 import {
   Sparkles,
@@ -15,14 +15,16 @@ import {
   ShieldAlert,
   Smartphone,
   Calendar,
-  Menu as MenuIcon,
   ChevronRight,
   TrendingUp,
   Lock,
   Check,
+  Minus,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
-// Custom SVG replacement for Github Icon because of lucide-react version compatibility
+// Custom SVG replacement for Github Icon
 const GithubIcon: React.FC<{ size?: number; className?: string }> = ({
   size = 16,
   className = '',
@@ -34,7 +36,7 @@ const GithubIcon: React.FC<{ size?: number; className?: string }> = ({
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2"
+    strokeWidth="1.5"
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
@@ -44,7 +46,7 @@ const GithubIcon: React.FC<{ size?: number; className?: string }> = ({
   </svg>
 );
 
-// Custom SVG replacement for Slack Icon because of lucide-react version compatibility
+// Custom SVG replacement for Slack Icon
 const SlackIcon: React.FC<{ size?: number; className?: string }> = ({
   size = 16,
   className = '',
@@ -56,7 +58,7 @@ const SlackIcon: React.FC<{ size?: number; className?: string }> = ({
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="2"
+    strokeWidth="1.5"
     strokeLinecap="round"
     strokeLinejoin="round"
     className={className}
@@ -70,6 +72,80 @@ const SlackIcon: React.FC<{ size?: number; className?: string }> = ({
     <rect width="8" height="3" x="14" y="8" rx="1.5" />
     <path d="M15.5 5a1.5 1.5 0 1 1 0 3H14a1.5 1.5 0 1 1 0-3z" />
   </svg>
+);
+
+// Custom SVG replacement for Discord Icon
+const DiscordIcon: React.FC<{ size?: number; className?: string }> = ({
+  size = 16,
+  className = '',
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.094 13.094 0 0 1-1.873-.894.077.077 0 0 1-.008-.128c.126-.093.252-.19.372-.287a.075.075 0 0 1 .077-.011c3.92 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.246.195.373.289a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.156 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.156-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.156 2.418z" />
+  </svg>
+);
+
+// Custom SVG replacement for LinkedIn Icon
+const LinkedinIcon: React.FC<{ size?: number; className?: string }> = ({
+  size = 16,
+  className = '',
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+    <rect width="4" height="12" x="2" y="9" />
+    <circle cx="4" cy="4" r="2" />
+  </svg>
+);
+
+// Custom SVG replacement for X Icon (Twitter)
+const XIcon: React.FC<{ size?: number; className?: string }> = ({
+  size = 16,
+  className = '',
+}) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
+
+// Reusable Circular Social Icon Link component
+const SocialIcon: React.FC<{ href: string; children: React.ReactNode; ariaLabel: string }> = ({
+  href,
+  children,
+  ariaLabel,
+}) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label={ariaLabel}
+    className="w-8 h-8 rounded-full border border-[#EAE5DA] bg-white text-[#6B7280] flex items-center justify-center transition-all duration-300 hover:bg-[#5F6B38] hover:text-white hover:border-[#5F6B38] hover:-translate-y-0.5 active:scale-95"
+  >
+    {children}
+  </a>
 );
 
 // Mock Mockups for Interactive Inbox Demo
@@ -118,7 +194,7 @@ const mockEmails: MockEmail[] = [
     id: '2',
     sender: 'AWS Billing (billing@aws.com)',
     avatar: 'AW',
-    avatarUrl: 'https://invalid-image-url-for-testing-purposes.com/broken.jpg',
+    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
     time: '1 hour ago',
     subject: 'June 2026 Invoice #8937492',
     snippet:
@@ -157,10 +233,38 @@ const mockEmails: MockEmail[] = [
   },
 ];
 
+const sectionVariants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.45,
+      staggerChildren: 0.06,
+      ease: [0.21, 0.47, 0.32, 0.98]
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: "easeOut" }
+  }
+};
+
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Light/Dark toggle placeholder state
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Active section tracking state
+  const [activeSection, setActiveSection] = useState<string>('');
 
   // Interactive Inbox Simulator States
   const [selectedEmail, setSelectedEmail] = useState<MockEmail>(mockEmails[0]);
@@ -175,10 +279,22 @@ export const LandingPage: React.FC = () => {
   // Hero Living AI Loop States
   const [heroLoopStep, setHeroLoopStep] = useState(0);
 
-  // Listen to scrolling to blur/fade Navbar
+  // Scroll parallax configurations
+  const { scrollY } = useScroll();
+  const yParallax = useTransform(scrollY, [0, 600], [0, -35]);
+
+  // Handle landing page active class on body to avoid polluting global layout
+  useEffect(() => {
+    document.body.classList.add('landing-page-active');
+    return () => {
+      document.body.classList.remove('landing-page-active');
+    };
+  }, []);
+
+  // Listen to scrolling to smaller height and opacity
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 40) {
+      if (window.scrollY > 20) {
         setIsScrolled(true);
       } else {
         setIsScrolled(false);
@@ -186,6 +302,36 @@ export const LandingPage: React.FC = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Scroll Observer for navigation links highlighting
+  useEffect(() => {
+    const sections = ['features', 'pipeline', 'demo', 'comparison'];
+    const observerOptions = {
+      root: null,
+      rootMargin: '-40% 0px -40% 0px',
+      threshold: 0,
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id);
+        }
+      });
+    }, observerOptions);
+
+    sections.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      sections.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) observer.unobserve(el);
+      });
+    };
   }, []);
 
   // Running Hero living loop
@@ -224,83 +370,143 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#fafafa] text-slate-900 font-sans min-h-screen relative overflow-x-hidden selection:bg-indigo-500/10 selection:text-indigo-600">
+    <div className="bg-[#FAF7F2] text-[#1D1D1D] font-sans min-h-screen relative overflow-x-hidden selection:bg-[#5F6B38]/10 selection:text-[#5F6B38]">
       {/* ── Background Patterns & Aurora Gradients ────────────────────────────────── */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Subtle grid pattern overlay */}
-        <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:24px_24px]" />
+        {/* Subtle engineering grid pattern overlay */}
+        <div className="absolute inset-0 engineering-grid opacity-100" />
 
-        {/* Glowing Auroras */}
-        <div className="absolute top-[-10%] left-[10%] w-[80vw] h-[80vw] md:w-[60vw] md:h-[60vw] rounded-full bg-gradient-to-tr from-indigo-500/10 to-violet-500/5 blur-[120px]" />
-        <div className="absolute top-[30%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-cyan-500/5 to-blue-500/10 blur-[100px]" />
-        <div className="absolute bottom-[10%] left-[-15%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-tr from-purple-500/5 to-indigo-500/10 blur-[120px]" />
+        {/* Glowing Auroras (Soft Olive & Gold) */}
+        <div className="absolute top-[-10%] left-[10%] w-[80vw] h-[80vw] md:w-[60vw] md:h-[60vw] rounded-full bg-gradient-to-tr from-[#5F6B38]/3 to-[#E2B65C]/3 blur-[120px]" />
+        <div className="absolute top-[30%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-gradient-to-br from-[#E2B65C]/3 to-[#5F6B38]/3 blur-[100px]" />
+        <div className="absolute bottom-[10%] left-[-15%] w-[60vw] h-[60vw] rounded-full bg-gradient-to-tr from-[#E2B65C]/3 to-[#5F6B38]/3 blur-[120px]" />
       </div>
 
       {/* ── Navigation Bar ────────────────────────────────────────────────────── */}
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-[250ms] ease-in-out flex items-center ${
           isScrolled
-            ? 'bg-white/80 backdrop-blur-md border-b border-slate-200/50 shadow-sm py-3.5'
-            : 'bg-transparent py-5'
-        }`}
+            ? 'h-[60px] bg-white/80 border-b border-[#EAE5DA] shadow-[0_8px_30px_rgba(95,107,56,0.04)]'
+            : 'h-[76px] bg-white/65 border-b border-[#EAE5DA]/20'
+        } backdrop-blur-md`}
       >
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        <div className="w-full max-w-[1280px] mx-auto px-6 flex items-center justify-between">
           {/* Logo */}
           <div
-            className="flex items-center gap-2.5 cursor-pointer"
+            className="flex items-center gap-3 cursor-pointer select-none"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           >
-            <div className="flex items-center justify-center w-8.5 h-8.5 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 shadow-md">
-              <Sparkles size={16} className="text-black font-black" />
+            <div className="flex items-center justify-center w-[34px] h-[34px] rounded-[14px] bg-[#5F6B38] shadow-sm transition-transform duration-200 hover:scale-105 active:scale-95">
+              <Sparkles size={16} strokeWidth={1.5} className="text-white" />
             </div>
-            <div>
-              <h1 className="text-base font-bold tracking-tight text-slate-900">
+            <div className="flex flex-col justify-center">
+              <h1 className="text-sm font-bold tracking-tight text-[#1D1D1D] leading-none">
                 InboxOS
               </h1>
-              <span className="text-[9px] font-bold text-indigo-600 tracking-widest uppercase block -mt-0.5">
+              <span className="text-[9px] font-bold text-[#5F6B38] tracking-widest uppercase block mt-0.5">
                 AI Operating System
               </span>
             </div>
           </div>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-7 text-xs font-semibold text-slate-600">
+          <nav className="hidden md:flex items-center gap-9 text-[15px] font-medium text-[#6B7280]">
             <a
               href="#features"
-              className="hover:text-slate-900 transition-colors"
+              className={`group relative py-1.5 transition-colors duration-200 hover:text-[#5F6B38] ${
+                activeSection === 'features' ? 'text-[#5F6B38] font-semibold' : ''
+              }`}
             >
               Features
+              {activeSection === 'features' ? (
+                <motion.span
+                  layoutId="activeUnderline"
+                  className="absolute left-0 right-0 bottom-0 h-0.5 bg-[#5F6B38]"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              ) : (
+                <span className="absolute left-1/2 bottom-0 w-0 h-0.5 bg-[#5F6B38]/40 transition-all duration-200 group-hover:w-1/2 group-hover:-translate-x-1/2" />
+              )}
             </a>
             <a
               href="#pipeline"
-              className="hover:text-slate-900 transition-colors"
+              className={`group relative py-1.5 transition-colors duration-200 hover:text-[#5F6B38] ${
+                activeSection === 'pipeline' ? 'text-[#5F6B38] font-semibold' : ''
+              }`}
             >
               How it Works
+              {activeSection === 'pipeline' ? (
+                <motion.span
+                  layoutId="activeUnderline"
+                  className="absolute left-0 right-0 bottom-0 h-0.5 bg-[#5F6B38]"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              ) : (
+                <span className="absolute left-1/2 bottom-0 w-0 h-0.5 bg-[#5F6B38]/40 transition-all duration-200 group-hover:w-1/2 group-hover:-translate-x-1/2" />
+              )}
             </a>
-            <a href="#demo" className="hover:text-slate-900 transition-colors">
+            <a
+              href="#demo"
+              className={`group relative py-1.5 transition-colors duration-200 hover:text-[#5F6B38] ${
+                activeSection === 'demo' ? 'text-[#5F6B38] font-semibold' : ''
+              }`}
+            >
               Interactive Demo
+              {activeSection === 'demo' ? (
+                <motion.span
+                  layoutId="activeUnderline"
+                  className="absolute left-0 right-0 bottom-0 h-0.5 bg-[#5F6B38]"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              ) : (
+                <span className="absolute left-1/2 bottom-0 w-0 h-0.5 bg-[#5F6B38]/40 transition-all duration-200 group-hover:w-1/2 group-hover:-translate-x-1/2" />
+              )}
             </a>
             <a
               href="#comparison"
-              className="hover:text-slate-900 transition-colors"
+              className={`group relative py-1.5 transition-colors duration-200 hover:text-[#5F6B38] ${
+                activeSection === 'comparison' ? 'text-[#5F6B38] font-semibold' : ''
+              }`}
             >
               InboxOS vs Standard
+              {activeSection === 'comparison' ? (
+                <motion.span
+                  layoutId="activeUnderline"
+                  className="absolute left-0 right-0 bottom-0 h-0.5 bg-[#5F6B38]"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              ) : (
+                <span className="absolute left-1/2 bottom-0 w-0 h-0.5 bg-[#5F6B38]/40 transition-all duration-200 group-hover:w-1/2 group-hover:-translate-x-1/2" />
+              )}
             </a>
             <a
               href="https://github.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-slate-900 transition-colors"
+              className="group relative py-1.5 transition-colors duration-200 hover:text-[#5F6B38]"
             >
               Open Source
+              <span className="absolute left-1/2 bottom-0 w-0 h-0.5 bg-[#5F6B38]/40 transition-all duration-200 group-hover:w-1/2 group-hover:-translate-x-1/2" />
             </a>
           </nav>
 
-          {/* Nav CTAs */}
+          {/* Nav CTAs & Toggle */}
           <div className="hidden md:flex items-center gap-3">
             <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="w-10 h-10 rounded-[14px] border border-[#EAE5DA] bg-white text-[#6B7280] hover:text-[#1D1D1D] hover:bg-[#FAF7F2] hover:-translate-y-0.5 active:scale-95 transition-all duration-200 flex items-center justify-center"
+              aria-label="Toggle theme placeholder"
+            >
+              {isDarkMode ? (
+                <Moon size={18} strokeWidth={1.5} className="rotate-12 transition-transform duration-300" />
+              ) : (
+                <Sun size={18} strokeWidth={1.5} className="transition-transform duration-300" />
+              )}
+            </button>
+            
+            <button
               onClick={() => navigate('/login')}
-              className="px-4 py-2 text-xs font-semibold text-black font-black bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all shadow-sm shadow-indigo-600/10 active:scale-95"
+              className="h-[48px] px-6 text-[15px] font-semibold text-white bg-[#5F6B38] hover:bg-[#4F5A2F] rounded-[16px] transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(95,107,56,0.25)] active:scale-95 duration-200 flex items-center justify-center"
             >
               Get Started
             </button>
@@ -309,9 +515,14 @@ export const LandingPage: React.FC = () => {
           {/* Mobile Menu trigger */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 text-slate-600 hover:text-slate-900 transition-colors"
+            className="md:hidden p-2 text-[#6B7280] hover:text-[#1D1D1D] transition-colors relative w-10 h-10 flex items-center justify-center"
+            aria-label="Toggle mobile menu"
           >
-            {isMobileMenuOpen ? <X size={20} /> : <MenuIcon size={20} />}
+            <div className="w-5 h-4 flex flex-col justify-between relative">
+              <span className={`w-full h-0.5 bg-current rounded-full transition-transform duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-[7px]' : ''}`} />
+              <span className={`w-full h-0.5 bg-current rounded-full transition-opacity duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`} />
+              <span className={`w-full h-0.5 bg-current rounded-full transition-transform duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''}`} />
+            </div>
           </button>
         </div>
       </header>
@@ -320,47 +531,73 @@ export const LandingPage: React.FC = () => {
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-x-0 top-[60px] bg-white border-b border-slate-200 shadow-lg z-40 p-6 flex flex-col gap-4 md:hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="fixed inset-x-4 top-[84px] bg-white/95 border border-[#EAE5DA] shadow-xl rounded-[22px] z-40 p-6 flex flex-col gap-5 md:hidden backdrop-blur-md overflow-hidden"
           >
-            <a
-              href="#features"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm font-semibold text-slate-600 hover:text-slate-900 py-1"
-            >
-              Features
-            </a>
-            <a
-              href="#pipeline"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm font-semibold text-slate-600 hover:text-slate-900 py-1"
-            >
-              How it Works
-            </a>
-            <a
-              href="#demo"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm font-semibold text-slate-600 hover:text-slate-900 py-1"
-            >
-              Interactive Demo
-            </a>
-            <a
-              href="#comparison"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm font-semibold text-slate-600 hover:text-slate-900 py-1"
-            >
-              InboxOS vs Standard
-            </a>
-            <hr className="border-slate-100" />
-            <div className="flex gap-4">
+            <nav className="flex flex-col gap-4 text-left">
+              <a
+                href="#features"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`text-sm font-medium py-1 transition-colors duration-200 ${
+                  activeSection === 'features' ? 'text-[#5F6B38] font-semibold' : 'text-[#6B7280]'
+                }`}
+              >
+                Features
+              </a>
+              <a
+                href="#pipeline"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`text-sm font-medium py-1 transition-colors duration-200 ${
+                  activeSection === 'pipeline' ? 'text-[#5F6B38] font-semibold' : 'text-[#6B7280]'
+                }`}
+              >
+                How it Works
+              </a>
+              <a
+                href="#demo"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`text-sm font-medium py-1 transition-colors duration-200 ${
+                  activeSection === 'demo' ? 'text-[#5F6B38] font-semibold' : 'text-[#6B7280]'
+                }`}
+              >
+                Interactive Demo
+              </a>
+              <a
+                href="#comparison"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`text-sm font-medium py-1 transition-colors duration-200 ${
+                  activeSection === 'comparison' ? 'text-[#5F6B38] font-semibold' : 'text-[#6B7280]'
+                }`}
+              >
+                InboxOS vs Standard
+              </a>
+              <a
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-sm font-medium py-1 text-[#6B7280] hover:text-[#5F6B38]"
+              >
+                Open Source
+              </a>
+            </nav>
+            <hr className="border-[#EAE5DA]" />
+            <div className="flex gap-4 items-center">
+              <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="w-10 h-10 rounded-[14px] border border-[#EAE5DA] bg-white text-[#6B7280] hover:text-[#1D1D1D] hover:bg-[#FAF7F2] hover:-translate-y-0.5 active:scale-95 transition-all duration-200 flex items-center justify-center"
+                aria-label="Toggle theme placeholder"
+              >
+                {isDarkMode ? <Moon size={18} strokeWidth={1.5} /> : <Sun size={18} strokeWidth={1.5} />}
+              </button>
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
                   navigate('/login');
                 }}
-                className="flex-1 py-3 text-center text-xs font-semibold text-black font-black bg-indigo-600 hover:bg-indigo-500 rounded-xl transition-all"
+                className="flex-1 h-[48px] text-[15px] font-semibold text-white bg-[#5F6B38] hover:bg-[#4F5A2F] rounded-[16px] transition-all hover:shadow-[0_4px_20px_rgba(95,107,56,0.15)] active:scale-95 duration-200 flex items-center justify-center"
               >
                 Get Started
               </button>
@@ -370,24 +607,38 @@ export const LandingPage: React.FC = () => {
       </AnimatePresence>
 
       {/* ── Hero Section ──────────────────────────────────────────────────────── */}
-      <section className="relative pt-32 pb-24 md:pt-40 md:pb-32 px-6 max-w-7xl mx-auto z-10">
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={sectionVariants}
+        className="relative pt-36 pb-20 md:pt-44 md:pb-28 px-6 max-w-[1280px] mx-auto z-10"
+      >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           {/* Left Text */}
           <div className="lg:col-span-6 space-y-7 text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-600 font-bold text-[10px] tracking-wider uppercase">
-              <Sparkles size={11} />
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#5F6B38]/5 border border-[#5F6B38]/10 rounded-full text-[#5F6B38] font-bold text-[10px] tracking-wider uppercase">
+              <Sparkles size={11} strokeWidth={1.5} />
               <span>Introducing the Decision & Execution Layer</span>
             </div>
 
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-[1.08] lg:max-w-xl">
+            <h1 className="text-4xl md:text-5xl lg:text-[64px] font-bold tracking-tight text-[#1D1D1D] leading-[1.1] lg:max-w-2xl">
               Email that{' '}
-              <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-500 bg-clip-text text-transparent">
+              <span 
+                className="text-[#5F6B38]"
+                style={{
+                  backgroundImage: 'linear-gradient(to right, #5F6B38, #E2B65C, #5F6B38)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
                 understands, decides,
               </span>{' '}
               and acts for you.
             </h1>
 
-            <p className="text-sm md:text-base text-slate-600 leading-relaxed max-w-lg">
+            <p className="text-[18px] text-[#6B7280] leading-relaxed max-w-lg">
               InboxOS transforms Gmail and Outlook into an intelligent operating
               system. It reads incoming streams, parses action items, runs
               custom routing rules, and executes workflows
@@ -395,42 +646,58 @@ export const LandingPage: React.FC = () => {
               sending critical alerts.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2">
               <button
                 onClick={() => navigate('/login')}
-                className="px-6 py-3.5 text-xs font-semibold text-black font-black bg-indigo-600 hover:bg-indigo-500 rounded-2xl transition-all shadow-md shadow-indigo-600/10 hover:shadow-indigo-600/25 active:scale-98 flex items-center justify-center gap-2 font-bold"
+                className="group h-[48px] px-6 text-[15px] font-semibold text-white bg-[#5F6B38] hover:bg-[#4F5A2F] rounded-[16px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(95,107,56,0.25)] active:scale-95 flex items-center justify-center gap-2"
               >
                 <span>Get Started Free</span>
-                <ArrowRight size={14} />
+                <ArrowRight size={16} strokeWidth={2} className="transition-transform duration-200 group-hover:translate-x-[5px]" />
               </button>
               <a
                 href="#demo"
-                className="px-6 py-3.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200/80 hover:bg-slate-50 rounded-2xl transition-all text-center flex items-center justify-center gap-2 font-bold"
+                className="group h-[48px] px-6 text-[15px] font-semibold text-[#5F6B38] bg-white border border-[#5F6B38] hover:bg-[#FAF7F2] rounded-[16px] transition-all duration-200 hover:-translate-y-0.5 active:scale-95 text-center flex items-center justify-center gap-2"
               >
                 <span>Watch Live Demo</span>
-                <ChevronRight size={14} />
+                <ChevronRight size={16} strokeWidth={2} className="transition-transform duration-200 group-hover:translate-x-[5px]" />
               </a>
             </div>
 
-            <p className="text-[10px] font-semibold text-slate-400">
+            <p className="text-[10px] font-semibold text-[#6B7280]/60">
               Open source & self-hostable. Supports local AI models via Ollama.
             </p>
           </div>
 
-          {/* Right Hero Visual: Living AI Pipeline Loop */}
-          <div className="lg:col-span-6 relative flex justify-center">
-            <div className="w-full max-w-[480px] bg-white border border-slate-200/60 shadow-xl rounded-3xl p-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 blur-2xl rounded-full" />
+          {/* Right Hero Visual: Living AI Pipeline Loop with animations & parallax */}
+          <motion.div
+            style={{ y: yParallax }}
+            className="lg:col-span-6 relative flex justify-center"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1,
+                y: [0, -4, 0]
+              }}
+              transition={{
+                opacity: { duration: 0.8 },
+                scale: { duration: 0.8 },
+                y: { duration: 5, repeat: Infinity, ease: "easeInOut" }
+              }}
+              className="w-full max-w-[480px] bg-white border border-[#EAE5DA] shadow-[0_8px_30px_rgba(95,107,56,0.02)] rounded-[22px] p-6 relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_15px_30px_rgba(95,107,56,0.06)] hover:border-[#5F6B38]"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#5F6B38]/3 blur-2xl rounded-full" />
 
               {/* Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+              <div className="flex items-center justify-between pb-4 border-b border-[#EAE5DA] mb-6">
                 <div className="flex items-center gap-2">
-                  <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping" />
-                  <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                  <div className="h-2.5 w-2.5 rounded-full bg-[#5F6B38] animate-ping" />
+                  <span className="text-[10px] font-bold tracking-widest text-[#6B7280] uppercase">
                     Live Pipeline Flow
                   </span>
                 </div>
-                <span className="text-[9px] px-2 py-0.5 bg-slate-100 rounded text-slate-500 font-bold uppercase">
+                <span className="text-[9px] px-2 py-0.5 bg-[#FAF7F2] rounded text-[#6B7280] font-bold uppercase border border-[#EAE5DA]">
                   OpenAI Model Active
                 </span>
               </div>
@@ -438,168 +705,188 @@ export const LandingPage: React.FC = () => {
               {/* Pipeline Nodes */}
               <div className="space-y-4">
                 {/* Node 1: Inbound Email */}
-                <div
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-300 ${
+                <motion.div
+                  animate={{
+                    scale: heroLoopStep === 0 ? 1.01 : 1,
+                    x: heroLoopStep === 0 ? 4 : 0,
+                  }}
+                  transition={{ duration: 0.25 }}
+                  className={`flex items-center gap-3 p-3 rounded-[16px] border transition-all duration-[250ms] ${
                     heroLoopStep === 0
-                      ? 'bg-indigo-50/50 border-indigo-200 shadow-sm scale-[1.02]'
-                      : 'bg-slate-50/50 border-slate-100'
+                      ? 'bg-[#5F6B38]/5 border-[#5F6B38] shadow-[0_8px_20px_rgba(95,107,56,0.03)]'
+                      : 'bg-white border-[#EAE5DA] shadow-[0_4px_12px_rgba(95,107,56,0.01)]'
                   }`}
                 >
                   <div
-                    className={`p-2 rounded-lg ${heroLoopStep === 0 ? 'bg-indigo-600 text-black font-black' : 'bg-slate-200 text-slate-500'}`}
+                    className={`p-2 rounded-lg transition-colors duration-250 ${heroLoopStep === 0 ? 'bg-[#5F6B38] text-white shadow-sm' : 'bg-[#FAF7F2] text-[#6B7280] border border-[#EAE5DA]'}`}
                   >
-                    <Inbox size={14} />
+                    <Inbox size={14} strokeWidth={1.5} />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">
+                    <p className="text-[10px] font-bold text-[#6B7280] uppercase">
                       Step 1: Ingestion
                     </p>
-                    <p className="text-xs font-semibold text-slate-800 truncate">
+                    <p className="text-xs font-semibold text-[#1D1D1D] truncate">
                       {heroLoopStep >= 0
                         ? 'Sarah requested moving sync to Wed 2pm...'
                         : 'Awaiting incoming email...'}
                     </p>
                   </div>
                   {heroLoopStep === 0 && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-ping" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#5F6B38] animate-ping" />
                   )}
-                </div>
+                </motion.div>
 
                 {/* Connector Line 1 */}
-                <div className="h-3 ml-6 w-0.5 bg-slate-200 relative">
+                <div className="h-3 ml-6 w-0.5 bg-[#EAE5DA] relative">
                   {heroLoopStep === 1 && (
                     <motion.div
                       initial={{ top: 0 }}
                       animate={{ top: '100%' }}
                       transition={{ duration: 1.5, repeat: Infinity }}
-                      className="absolute left-[-2px] h-1.5 w-1.5 rounded-full bg-indigo-500 shadow-md"
+                      className="absolute left-[-2px] h-1.5 w-1.5 rounded-full bg-[#5F6B38] shadow-sm"
                     />
                   )}
                 </div>
 
                 {/* Node 2: AI Parser / Intelligence */}
-                <div
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-300 ${
+                <motion.div
+                  animate={{
+                    scale: heroLoopStep === 1 ? 1.01 : 1,
+                    x: heroLoopStep === 1 ? 4 : 0,
+                  }}
+                  transition={{ duration: 0.25 }}
+                  className={`flex items-center gap-3 p-3 rounded-[16px] border transition-all duration-[250ms] ${
                     heroLoopStep === 1
-                      ? 'bg-indigo-50/50 border-indigo-200 shadow-sm scale-[1.02]'
-                      : 'bg-slate-50/50 border-slate-100'
+                      ? 'bg-[#5F6B38]/5 border-[#5F6B38] shadow-[0_8px_20px_rgba(95,107,56,0.03)]'
+                      : 'bg-white border-[#EAE5DA] shadow-[0_4px_12px_rgba(95,107,56,0.01)]'
                   }`}
                 >
                   <div
-                    className={`p-2 rounded-lg ${heroLoopStep === 1 ? 'bg-indigo-600 text-black font-black animate-pulse' : 'bg-slate-200 text-slate-500'}`}
+                    className={`p-2 rounded-lg transition-colors duration-250 ${heroLoopStep === 1 ? 'bg-[#5F6B38] text-white shadow-sm' : 'bg-[#FAF7F2] text-[#6B7280] border border-[#EAE5DA]'}`}
                   >
-                    <Cpu size={14} />
+                    <Cpu size={14} strokeWidth={1.5} />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">
+                    <p className="text-[10px] font-bold text-[#6B7280] uppercase">
                       Step 2: AI Analysis
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs font-semibold text-slate-800">
+                      <span className="text-xs font-semibold text-[#1D1D1D]">
                         Priority Score:
                       </span>
                       <span
-                        className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                        className={`text-[10px] font-bold px-1.5 py-0.2 rounded border transition-colors duration-200 ${
                           heroLoopStep >= 1
-                            ? 'bg-rose-500/10 text-rose-600 border border-rose-100'
-                            : 'bg-slate-200 text-slate-400'
+                            ? 'bg-[#5F6B38]/10 text-[#5F6B38] border-[#5F6B38]/20'
+                            : 'bg-white text-[#6B7280] border-[#EAE5DA]'
                         }`}
                       >
                         {heroLoopStep >= 1 ? '94% Urgent' : 'Pending'}
                       </span>
                     </div>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Connector Line 2 */}
-                <div className="h-3 ml-6 w-0.5 bg-slate-200 relative">
+                <div className="h-3 ml-6 w-0.5 bg-[#EAE5DA] relative">
                   {heroLoopStep === 2 && (
                     <motion.div
                       initial={{ top: 0 }}
                       animate={{ top: '100%' }}
                       transition={{ duration: 1.5, repeat: Infinity }}
-                      className="absolute left-[-2px] h-1.5 w-1.5 rounded-full bg-indigo-500 shadow-md"
+                      className="absolute left-[-2px] h-1.5 w-1.5 rounded-full bg-[#5F6B38] shadow-sm"
                     />
                   )}
                 </div>
 
                 {/* Node 3: Rules & Decision Engine */}
-                <div
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-300 ${
+                <motion.div
+                  animate={{
+                    scale: heroLoopStep === 2 ? 1.01 : 1,
+                    x: heroLoopStep === 2 ? 4 : 0,
+                  }}
+                  transition={{ duration: 0.25 }}
+                  className={`flex items-center gap-3 p-3 rounded-[16px] border transition-all duration-[250ms] ${
                     heroLoopStep === 2
-                      ? 'bg-indigo-50/50 border-indigo-200 shadow-sm scale-[1.02]'
-                      : 'bg-slate-50/50 border-slate-100'
+                      ? 'bg-[#5F6B38]/5 border-[#5F6B38] shadow-[0_8px_20px_rgba(95,107,56,0.03)]'
+                      : 'bg-white border-[#EAE5DA] shadow-[0_4px_12px_rgba(95,107,56,0.01)]'
                   }`}
                 >
                   <div
-                    className={`p-2 rounded-lg ${heroLoopStep === 2 ? 'bg-indigo-600 text-black font-black' : 'bg-slate-200 text-slate-500'}`}
+                    className={`p-2 rounded-lg transition-colors duration-250 ${heroLoopStep === 2 ? 'bg-[#5F6B38] text-white shadow-sm' : 'bg-[#FAF7F2] text-[#6B7280] border border-[#EAE5DA]'}`}
                   >
-                    <Zap size={14} />
+                    <Zap size={14} strokeWidth={1.5} />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">
+                    <p className="text-[10px] font-bold text-[#6B7280] uppercase">
                       Step 3: Decision Engine
                     </p>
-                    <p className="text-xs font-semibold text-slate-800">
+                    <p className="text-xs font-semibold text-[#1D1D1D]">
                       {heroLoopStep >= 2
                         ? 'Trigger Rule: [Meeting Request Update]'
                         : 'Awaiting reasoning matching...'}
                     </p>
                   </div>
-                </div>
+                </motion.div>
 
                 {/* Connector Line 3 */}
-                <div className="h-3 ml-6 w-0.5 bg-slate-200 relative">
+                <div className="h-3 ml-6 w-0.5 bg-[#EAE5DA] relative">
                   {heroLoopStep === 3 && (
                     <motion.div
                       initial={{ top: 0 }}
                       animate={{ top: '100%' }}
                       transition={{ duration: 1.5, repeat: Infinity }}
-                      className="absolute left-[-2px] h-1.5 w-1.5 rounded-full bg-indigo-500 shadow-md"
+                      className="absolute left-[-2px] h-1.5 w-1.5 rounded-full bg-[#5F6B38] shadow-sm"
                     />
                   )}
                 </div>
 
                 {/* Node 4: Automatic Actions & Output */}
-                <div
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-300 ${
+                <motion.div
+                  animate={{
+                    scale: heroLoopStep === 3 ? 1.01 : 1,
+                    x: heroLoopStep === 3 ? 4 : 0,
+                  }}
+                  transition={{ duration: 0.25 }}
+                  className={`flex items-center gap-3 p-3 rounded-[16px] border transition-all duration-[250ms] ${
                     heroLoopStep === 3
-                      ? 'bg-indigo-50/50 border-indigo-200 shadow-sm scale-[1.02]'
-                      : 'bg-slate-50/50 border-slate-100'
+                      ? 'bg-[#5F6B38]/5 border-[#5F6B38] shadow-[0_8px_20px_rgba(95,107,56,0.03)]'
+                      : 'bg-white border-[#EAE5DA] shadow-[0_4px_12px_rgba(95,107,56,0.01)]'
                   }`}
                 >
                   <div
-                    className={`p-2 rounded-lg ${heroLoopStep === 3 ? 'bg-indigo-600 text-black font-black animate-bounce' : 'bg-slate-200 text-slate-500'}`}
+                    className={`p-2 rounded-lg transition-colors duration-250 ${heroLoopStep === 3 ? 'bg-[#5F6B38] text-white shadow-sm' : 'bg-[#FAF7F2] text-[#6B7280] border border-[#EAE5DA]'}`}
                   >
-                    <Send size={14} />
+                    <Send size={14} strokeWidth={1.5} />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">
+                    <p className="text-[10px] font-bold text-[#6B7280] uppercase">
                       Step 4: Automation Dispatch
                     </p>
                     <div className="flex gap-2 mt-1">
                       <span
-                        className={`p-1 rounded bg-slate-100 text-slate-400 flex items-center gap-1 ${
+                        className={`p-1 rounded bg-white text-[#6B7280] flex items-center gap-1 border border-[#EAE5DA] transition-colors duration-200 ${
                           heroLoopStep >= 3
-                            ? 'text-indigo-600 bg-indigo-50 border border-indigo-100'
+                            ? 'text-[#5F6B38] bg-[#5F6B38]/5 border-[#5F6B38]/20'
                             : ''
                         }`}
                       >
-                        <Calendar size={10} />
+                        <Calendar size={10} strokeWidth={1.5} />
                       </span>
                       <span
-                        className={`p-1 rounded bg-slate-100 text-slate-400 flex items-center gap-1 ${
+                        className={`p-1 rounded bg-white text-[#6B7280] flex items-center gap-1 border border-[#EAE5DA] transition-colors duration-200 ${
                           heroLoopStep >= 3
-                            ? 'text-emerald-600 bg-emerald-50 border border-emerald-100'
+                            ? 'text-[#E2B65C] bg-[#E2B65C]/5 border-[#E2B65C]/20'
                             : ''
                         }`}
                       >
-                        <Smartphone size={10} />
+                        <Smartphone size={10} strokeWidth={1.5} />
                       </span>
                       <span
-                        className={`p-1 rounded bg-slate-100 text-slate-400 flex items-center gap-1 ${
+                        className={`p-1 rounded bg-white text-[#6B7280] flex items-center gap-1 border border-[#EAE5DA] transition-colors duration-200 ${
                           heroLoopStep >= 3
-                            ? 'text-blue-500 bg-blue-50 border border-blue-100'
+                            ? 'text-blue-500 bg-blue-500/5 border-blue-500/20'
                             : ''
                         }`}
                       >
@@ -607,7 +894,7 @@ export const LandingPage: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </div>
 
               {/* Pipeline Success Overlay */}
@@ -619,654 +906,737 @@ export const LandingPage: React.FC = () => {
                     exit={{ opacity: 0 }}
                     className="absolute inset-0 bg-white/95 backdrop-blur-sm flex flex-col justify-center items-center p-6 text-center z-20"
                   >
-                    <div className="h-12 w-12 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mb-3 animate-bounce">
-                      <CheckCircle2 size={24} />
+                    <div className="h-12 w-12 rounded-full bg-[#5F6B38]/10 text-[#5F6B38] flex items-center justify-center mb-3 animate-bounce">
+                      <CheckCircle2 size={24} strokeWidth={1.5} />
                     </div>
-                    <h4 className="text-sm font-bold text-slate-800">
+                    <h4 className="text-sm font-bold text-[#1D1D1D]">
                       Email Pipeline Resolved
                     </h4>
-                    <p className="text-[11px] text-slate-500 mt-1 max-w-[280px]">
+                    <p className="text-[11px] text-[#6B7280] mt-1 max-w-[280px] leading-relaxed">
                       Sarah's email was analyzed. Calendar updated, team
                       notified in Slack. All actions logged in 0.8 seconds.
                     </p>
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── Floating Statistics ────────────────────────────────────────────────── */}
-      <section className="py-12 bg-white/40 border-y border-slate-200/50 px-6 z-10 relative">
-        <div className="max-w-7xl mx-auto">
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={sectionVariants}
+        className="max-w-[1280px] mx-auto px-6 md:px-12 my-[120px] z-10 relative"
+      >
+        <div className="bg-white border border-[#EAE5DA] rounded-[22px] p-6 md:p-8 shadow-[0_8px_30px_rgba(95,107,56,0.02)]">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm text-center">
-              <p className="text-3xl font-extrabold tracking-tight text-indigo-600">
+            <motion.div
+              variants={itemVariants}
+              className="p-4 bg-white border border-[#EAE5DA] rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-center"
+            >
+              <p className="text-3xl font-extrabold tracking-tight text-[#5F6B38]">
                 1,000+
               </p>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mt-1">
                 Emails Processed/Day
               </p>
-            </div>
+            </motion.div>
 
-            <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm text-center">
-              <p className="text-3xl font-extrabold tracking-tight text-slate-900">
+            <motion.div
+              variants={itemVariants}
+              className="p-4 bg-white border border-[#EAE5DA] rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-center"
+            >
+              <p className="text-3xl font-extrabold tracking-tight text-[#1D1D1D]">
                 98%
               </p>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mt-1">
                 Classification Rate
               </p>
-            </div>
+            </motion.div>
 
-            <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm text-center">
-              <p className="text-3xl font-extrabold tracking-tight text-indigo-600">
+            <motion.div
+              variants={itemVariants}
+              className="p-4 bg-white border border-[#EAE5DA] rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-center"
+            >
+              <p className="text-3xl font-extrabold tracking-tight text-[#5F6B38]">
                 6+
               </p>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mt-1">
                 Delivery Channels
               </p>
-            </div>
+            </motion.div>
 
-            <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm text-center">
-              <p className="text-3xl font-extrabold tracking-tight text-slate-900">
+            <motion.div
+              variants={itemVariants}
+              className="p-4 bg-white border border-[#EAE5DA] rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-center"
+            >
+              <p className="text-3xl font-extrabold tracking-tight text-[#1D1D1D]">
                 &lt;60s
               </p>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mt-1">
                 Escalation Alert Time
               </p>
-            </div>
+            </motion.div>
 
-            <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm text-center flex flex-col justify-center items-center">
-              <p className="text-sm font-extrabold tracking-tight text-indigo-600 flex items-center justify-center gap-1">
-                <Zap size={13} className="animate-pulse" />
+            <motion.div
+              variants={itemVariants}
+              className="p-4 bg-white border border-[#EAE5DA] rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-center flex flex-col justify-center items-center"
+            >
+              <p className="text-sm font-extrabold tracking-tight text-[#5F6B38] flex items-center justify-center gap-1">
+                <Zap size={13} strokeWidth={1.5} className="animate-pulse" />
                 <span>Decision Engine</span>
               </p>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mt-1">
                 AI Powered Rules
               </p>
-            </div>
+            </motion.div>
 
-            <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm text-center flex flex-col justify-center items-center">
-              <p className="text-sm font-extrabold tracking-tight text-slate-900 flex items-center justify-center gap-1">
-                <Lock size={13} />
+            <motion.div
+              variants={itemVariants}
+              className="p-4 bg-white border border-[#EAE5DA] rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-center flex flex-col justify-center items-center"
+            >
+              <p className="text-sm font-extrabold tracking-tight text-[#1D1D1D] flex items-center justify-center gap-1">
+                <Lock size={13} strokeWidth={1.5} />
                 <span>Privacy First</span>
               </p>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] mt-1">
                 Local AI supported
               </p>
-            </div>
+            </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── Interactive Pipeline Steps Section ─────────────────────────────────── */}
-      <section
+      <motion.section
         id="pipeline"
-        className="py-24 px-6 max-w-7xl mx-auto z-10 relative"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={sectionVariants}
+        className="max-w-[1280px] mx-auto px-6 md:px-12 my-[120px] z-10 relative"
       >
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">
-            Every email goes through an intelligent pipeline.
-          </h2>
-          <p className="text-sm text-slate-600">
-            InboxOS acts as a middle-tier decision engine. Below is the precise
-            5-layer pipeline that runs in under a second for every message.
-            Click any step to inspect the details.
-          </p>
-        </div>
+        <div className="bg-white border border-[#EAE5DA] rounded-[22px] p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.015)]">
+          <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
+            <h2 className="text-3xl md:text-[44px] font-bold tracking-tight text-[#1D1D1D] leading-tight">
+              Every email goes through an intelligent pipeline.
+            </h2>
+            <p className="text-sm text-[#6B7280] leading-relaxed">
+              InboxOS acts as a middle-tier decision engine. Below is the precise
+              5-layer pipeline that runs in under a second for every message.
+              Click any step to inspect the details.
+            </p>
+          </div>
 
-        {/* Horizontal flow line layout */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
-          {[
-            {
-              num: 1,
-              title: 'Ingestion Layer',
-              desc: 'Securely monitors Gmail, Outlook, or IMAP over OAuth 2.0. Pulls multipart body files instantly.',
-              details: [
-                'OAuth 2.0 Client Tokens',
-                'Cron Webhook Listeners',
-                'IMAP Secure Sync',
-                'Raw EML file sanitization',
-              ],
-            },
-            {
-              num: 2,
-              title: 'AI Intelligence',
-              desc: 'Structured models evaluate priority context, summarize message bodies, and extract deadlines.',
-              details: [
-                'Context Comprehension',
-                'Priority Score (0-100)',
-                'Deadline Extraction',
-                'Action Item Isolation',
-              ],
-            },
-            {
-              num: 3,
-              title: 'Decision Engine',
-              desc: 'Evaluates matched entities against custom user-defined boolean routing rules.',
-              details: [
-                'User Rules DSL Parser',
-                'Logical Routing Nodes',
-                'Time-of-day execution windows',
-                'AI feedback loops',
-              ],
-            },
-            {
-              num: 4,
-              title: 'Automation Queue',
-              desc: 'Triggers programmatic tasks, books calendar syncs, and organizes email labels.',
-              details: [
-                'Celery Async Worker queue',
-                'Google Calendar booking',
-                'Auto-task generation',
-                'Gmail label orchestration',
-              ],
-            },
-            {
-              num: 5,
-              title: 'Delivery Channel',
-              desc: 'Dispatches real-time summary notifications to your custom communication dashboards.',
-              details: [
-                'Slack Incoming Webhooks',
-                'Telegram Escalations',
-                'WhatsApp Urgent SMS alerts',
-                'Live WebSockets interface',
-              ],
-            },
-          ].map((step, idx) => (
-            <div
-              key={idx}
-              onClick={() =>
-                setActivePipelineStep(activePipelineStep === idx ? null : idx)
-              }
-              className={`p-5 rounded-2xl border transition-all duration-300 cursor-pointer text-left relative ${
-                activePipelineStep === idx
-                  ? 'bg-white border-indigo-600 shadow-md ring-2 ring-indigo-500/10'
-                  : 'bg-white/60 border-slate-200/60 hover:bg-white hover:border-slate-300 hover:shadow-sm'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                  Step {step.num}
-                </span>
-                {activePipelineStep === idx ? (
-                  <span className="text-xs font-bold text-indigo-600">
-                    Active
+          {/* Horizontal flow line layout */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 relative">
+            {[
+              {
+                num: 1,
+                title: 'Ingestion Layer',
+                desc: 'Securely monitors Gmail, Outlook, or IMAP over OAuth 2.0. Pulls multipart body files instantly.',
+                details: [
+                  'OAuth 2.0 Client Tokens',
+                  'Cron Webhook Listeners',
+                  'IMAP Secure Sync',
+                  'Raw EML file sanitization',
+                ],
+              },
+              {
+                num: 2,
+                title: 'AI Intelligence',
+                desc: 'Structured models evaluate priority context, summarize message bodies, and extract deadlines.',
+                details: [
+                  'Context Comprehension',
+                  'Priority Score (0-100)',
+                  'Deadline Extraction',
+                  'Action Item Isolation',
+                ],
+              },
+              {
+                num: 3,
+                title: 'Decision Engine',
+                desc: 'Evaluates matched entities against custom user-defined boolean routing rules.',
+                details: [
+                  'User Rules DSL Parser',
+                  'Logical Routing Nodes',
+                  'Time-of-day execution windows',
+                  'AI feedback loops',
+                ],
+              },
+              {
+                num: 4,
+                title: 'Automation Queue',
+                desc: 'Triggers programmatic tasks, books calendar syncs, and organizes email labels.',
+                details: [
+                  'Celery Async Worker queue',
+                  'Google Calendar booking',
+                  'Auto-task generation',
+                  'Gmail label orchestration',
+                ],
+              },
+              {
+                num: 5,
+                title: 'Delivery Channel',
+                desc: 'Dispatches real-time summary notifications to your custom communication dashboards.',
+                details: [
+                  'Slack Incoming Webhooks',
+                  'Telegram Escalations',
+                  'WhatsApp Urgent SMS alerts',
+                  'Live WebSockets interface',
+                ],
+              },
+            ].map((step, idx) => (
+              <motion.div
+                key={idx}
+                variants={itemVariants}
+                onClick={() =>
+                  setActivePipelineStep(activePipelineStep === idx ? null : idx)
+                }
+                className={`p-5 rounded-[22px] border cursor-pointer text-left relative transition-all duration-[250ms] ${
+                  activePipelineStep === idx
+                    ? 'bg-white border-[#5F6B38] shadow-[0_20px_40px_rgba(95,107,56,0.08)] ring-2 ring-[#5F6B38]/5'
+                    : 'bg-white border-[#EAE5DA] shadow-[0_8px_30px_rgba(95,107,56,0.02)] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38]'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FAF7F2] text-[#6B7280] border border-[#EAE5DA]">
+                    Step {step.num}
                   </span>
-                ) : (
-                  <span className="text-[10px] text-slate-400 font-semibold">
-                    Click to expand
-                  </span>
-                )}
-              </div>
+                  {activePipelineStep === idx ? (
+                    <span className="text-xs font-bold text-[#5F6B38]">
+                      Active
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-[#6B7280]/60 font-semibold">
+                      Click to expand
+                    </span>
+                  )}
+                </div>
 
-              <h3 className="text-sm font-bold text-slate-800 mb-1">
-                {step.title}
-              </h3>
-              <p className="text-[11px] text-slate-500 leading-relaxed mb-3">
-                {step.desc}
-              </p>
+                <h3 className="text-sm font-bold text-[#1D1D1D] mb-1">
+                  {step.title}
+                </h3>
+                <p className="text-[11px] text-[#6B7280] leading-relaxed mb-3">
+                  {step.desc}
+                </p>
 
-              {/* Collapsible Details */}
-              <AnimatePresence>
-                {activePipelineStep === idx && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden border-t border-slate-100 pt-3 mt-3"
-                  >
-                    <p className="text-[9px] font-bold text-slate-400 uppercase mb-2">
-                      Technologies / Sub-services
-                    </p>
-                    <ul className="space-y-1">
-                      {step.details.map((d, i) => (
-                        <li
-                          key={i}
-                          className="text-[10px] text-slate-600 flex items-center gap-1.5"
-                        >
-                          <CheckCircle2 size={10} className="text-indigo-600" />
-                          <span>{d}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
+                {/* Collapsible Details */}
+                <AnimatePresence>
+                  {activePipelineStep === idx && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden border-t border-[#EAE5DA] pt-3 mt-3"
+                    >
+                      <p className="text-[9px] font-bold text-[#6B7280]/70 uppercase mb-2">
+                        Technologies / Sub-services
+                      </p>
+                      <ul className="space-y-1">
+                        {step.details.map((d, i) => (
+                          <li
+                            key={i}
+                            className="text-[10px] text-[#6B7280] flex items-center gap-1.5"
+                          >
+                            <CheckCircle2 size={10} strokeWidth={1.5} className="text-[#5F6B38]" />
+                            <span>{d}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── Feature Grid Section ───────────────────────────────────────────────── */}
-      <section
+      <motion.section
         id="features"
-        className="py-20 bg-slate-50 border-y border-slate-200/50 px-6 z-10 relative"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={sectionVariants}
+        className="max-w-[1280px] mx-auto px-6 md:px-12 my-[120px] z-10 relative"
       >
-        <div className="max-w-7xl mx-auto">
+        <div className="bg-white border border-[#EAE5DA] rounded-[22px] p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.015)]">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            <h2 className="text-3xl md:text-[44px] font-bold tracking-tight text-[#1D1D1D] leading-tight">
               Out of the box capabilities
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[#6B7280]">
               Unlike normal clients, InboxOS runs an asynchronous engine
               executing specialized backend workflows.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white border border-slate-200/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-left">
-              <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4">
-                <Cpu size={18} />
+            <motion.div
+              variants={itemVariants}
+              className="group bg-white border border-[#EAE5DA] p-6 rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-left"
+            >
+              <div className="h-10 w-10 rounded-xl bg-[#FAF7F2] border border-[#EAE5DA] text-[#5F6B38] flex items-center justify-center mb-4 transition-all duration-[250ms] group-hover:border-[#5F6B38]">
+                <Cpu size={18} strokeWidth={1.5} className="transition-transform duration-[250ms] group-hover:rotate-[5deg]" />
               </div>
-              <h4 className="text-sm font-bold text-slate-800 mb-2">
+              <h4 className="text-sm font-bold text-[#1D1D1D] mb-2">
                 🧠 AI Email Understanding
               </h4>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-xs text-[#6B7280] leading-relaxed">
                 InboxOS leverages advanced language models to perform true
                 semantic reasoning, going far beyond standard email summaries.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white border border-slate-200/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-left">
-              <div className="h-10 w-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-4">
-                <ShieldAlert size={18} />
+            <motion.div
+              variants={itemVariants}
+              className="group bg-white border border-[#EAE5DA] p-6 rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-left"
+            >
+              <div className="h-10 w-10 rounded-xl bg-[#FAF7F2] border border-[#EAE5DA] text-[#5F6B38] flex items-center justify-center mb-4 transition-all duration-[250ms] group-hover:border-[#5F6B38]">
+                <ShieldAlert size={18} strokeWidth={1.5} className="transition-transform duration-[250ms] group-hover:rotate-[5deg]" />
               </div>
-              <h4 className="text-sm font-bold text-slate-800 mb-2">
+              <h4 className="text-sm font-bold text-[#1D1D1D] mb-2">
                 ⚡ Instant Prioritization
               </h4>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-xs text-[#6B7280] leading-relaxed">
                 Sorts incoming mails by priority (0–100) instantly. Surfaces
                 deadline-critical items while holding back newsletters.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white border border-slate-200/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-left">
-              <div className="h-10 w-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center mb-4">
-                <Calendar size={18} />
+            <motion.div
+              variants={itemVariants}
+              className="group bg-white border border-[#EAE5DA] p-6 rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-left"
+            >
+              <div className="h-10 w-10 rounded-xl bg-[#FAF7F2] border border-[#EAE5DA] text-[#5F6B38] flex items-center justify-center mb-4 transition-all duration-[250ms] group-hover:border-[#5F6B38]">
+                <Calendar size={18} strokeWidth={1.5} className="transition-transform duration-[250ms] group-hover:rotate-[5deg]" />
               </div>
-              <h4 className="text-sm font-bold text-slate-800 mb-2">
+              <h4 className="text-sm font-bold text-[#1D1D1D] mb-2">
                 📅 Deadline Detection
               </h4>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-xs text-[#6B7280] leading-relaxed">
                 Auto-extracts dates and target timelines from body text.
                 Converts email threads to actionable calendar invites.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white border border-slate-200/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-left">
-              <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
-                <CheckCircle2 size={18} />
+            <motion.div
+              variants={itemVariants}
+              className="group bg-white border border-[#EAE5DA] p-6 rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-left"
+            >
+              <div className="h-10 w-10 rounded-xl bg-[#FAF7F2] border border-[#EAE5DA] text-[#5F6B38] flex items-center justify-center mb-4 transition-all duration-[250ms] group-hover:border-[#5F6B38]">
+                <CheckCircle2 size={18} strokeWidth={1.5} className="transition-transform duration-[250ms] group-hover:rotate-[5deg]" />
               </div>
-              <h4 className="text-sm font-bold text-slate-800 mb-2">
+              <h4 className="text-sm font-bold text-[#1D1D1D] mb-2">
                 ✅ Task Generation
               </h4>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-xs text-[#6B7280] leading-relaxed">
                 Identifies actions and tasks buried in complex email chains,
                 inserting them directly into your workflow queue.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white border border-slate-200/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-left">
-              <div className="h-10 w-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
-                <Smartphone size={18} />
+            <motion.div
+              variants={itemVariants}
+              className="group bg-white border border-[#EAE5DA] p-6 rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-left"
+            >
+              <div className="h-10 w-10 rounded-xl bg-[#FAF7F2] border border-[#EAE5DA] text-[#5F6B38] flex items-center justify-center mb-4 transition-all duration-[250ms] group-hover:border-[#5F6B38]">
+                <Smartphone size={18} strokeWidth={1.5} className="transition-transform duration-[250ms] group-hover:rotate-[5deg]" />
               </div>
-              <h4 className="text-sm font-bold text-slate-800 mb-2">
+              <h4 className="text-sm font-bold text-[#1D1D1D] mb-2">
                 📲 WhatsApp & SMS Alerts
               </h4>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-xs text-[#6B7280] leading-relaxed">
                 Escalates high-priority messages (e.g. system outage reports)
                 directly to SMS/WhatsApp, bypassing inbox clutter.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white border border-slate-200/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-left">
-              <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
-                <TrendingUp size={18} />
+            <motion.div
+              variants={itemVariants}
+              className="group bg-white border border-[#EAE5DA] p-6 rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-left"
+            >
+              <div className="h-10 w-10 rounded-xl bg-[#FAF7F2] border border-[#EAE5DA] text-[#5F6B38] flex items-center justify-center mb-4 transition-all duration-[250ms] group-hover:border-[#5F6B38]">
+                <TrendingUp size={18} strokeWidth={1.5} className="transition-transform duration-[250ms] group-hover:rotate-[5deg]" />
               </div>
-              <h4 className="text-sm font-bold text-slate-800 mb-2">
+              <h4 className="text-sm font-bold text-[#1D1D1D] mb-2">
                 📈 Analytics & Insight
               </h4>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-xs text-[#6B7280] leading-relaxed">
                 Monitors pipeline execution timings, classification accuracies,
                 volume metrics, and rule resolution rates over time.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white border border-slate-200/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-left">
-              <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
-                <Lock size={18} />
+            <motion.div
+              variants={itemVariants}
+              className="group bg-white border border-[#EAE5DA] p-6 rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-left"
+            >
+              <div className="h-10 w-10 rounded-xl bg-[#FAF7F2] border border-[#EAE5DA] text-[#5F6B38] flex items-center justify-center mb-4 transition-all duration-[250ms] group-hover:border-[#5F6B38]">
+                <Lock size={18} strokeWidth={1.5} className="transition-transform duration-[250ms] group-hover:rotate-[5deg]" />
               </div>
-              <h4 className="text-sm font-bold text-slate-800 mb-2">
+              <h4 className="text-sm font-bold text-[#1D1D1D] mb-2">
                 🔒 Local Privacy First
               </h4>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-xs text-[#6B7280] leading-relaxed">
                 Fully integrates with Ollama. Allows parsing confidential mail
                 streams entirely on local, offline compute instances.
               </p>
-            </div>
+            </motion.div>
 
-            <div className="bg-white border border-slate-200/60 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all text-left">
-              <div className="h-10 w-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
-                <Zap size={18} />
+            <motion.div
+              variants={itemVariants}
+              className="group bg-white border border-[#EAE5DA] p-6 rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-left"
+            >
+              <div className="h-10 w-10 rounded-xl bg-[#FAF7F2] border border-[#EAE5DA] text-[#5F6B38] flex items-center justify-center mb-4 transition-all duration-[250ms] group-hover:border-[#5F6B38]">
+                <Zap size={18} strokeWidth={1.5} className="transition-transform duration-[250ms] group-hover:rotate-[5deg]" />
               </div>
-              <h4 className="text-sm font-bold text-slate-800 mb-2">
+              <h4 className="text-sm font-bold text-[#1D1D1D] mb-2">
                 ⚙ Modular SDK Abstraction
               </h4>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-xs text-[#6B7280] leading-relaxed">
                 Easily write new connector drivers and custom execution actions
                 utilizing the standardized InboxOS Plugin SDK layer.
               </p>
-            </div>
+            </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── Interactive Demo Section ───────────────────────────────────────────── */}
-      <section id="demo" className="py-24 px-6 max-w-7xl mx-auto z-10 relative">
-        <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
-            Click through a live pipeline simulation.
-          </h2>
-          <p className="text-sm text-slate-600">
-            Select one of the mock emails in the folder to see how the
-            intelligence layer reasons, logs, and triggers actions.
-          </p>
-        </div>
-
-        {/* Demo container Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          {/* Simulated Inbox Folder */}
-          <div className="lg:col-span-5 bg-white border border-slate-200/60 shadow-sm rounded-3xl p-5 flex flex-col justify-start">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
-              <span className="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
-                <Inbox size={14} className="text-indigo-600" />
-                <span>Simulated Inbound Stream</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-semibold">
-                3 unread messages
-              </span>
-            </div>
-
-            {/* Email list */}
-            <div className="space-y-2">
-              {mockEmails.map((email) => (
-                <button
-                  key={email.id}
-                  onClick={() => {
-                    setSelectedEmail(email);
-                    setExecutedAction(null);
-                  }}
-                  className={`w-full text-left p-3.5 rounded-xl border transition-all flex gap-3 ${
-                    selectedEmail.id === email.id
-                      ? 'bg-indigo-50/40 border-indigo-200 shadow-sm'
-                      : 'bg-transparent border-slate-100 hover:border-slate-200 hover:bg-slate-50/40'
-                  }`}
-                >
-                  <Avatar
-                    name={email.sender}
-                    imageUrl={email.avatarUrl}
-                    size={32}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center">
-                      <p className="text-xs font-bold text-slate-800 truncate">
-                        {email.sender.split(' ')[0]}
-                      </p>
-                      <span className="text-[9px] text-slate-400 font-medium">
-                        {email.time}
-                      </span>
-                    </div>
-                    <p className="text-xs font-semibold text-slate-700 truncate mt-0.5">
-                      {email.subject}
-                    </p>
-                    <p className="text-[10px] text-slate-500 truncate mt-0.5">
-                      {email.snippet}
-                    </p>
-
-                    <div className="flex items-center gap-2 mt-2">
-                      <span
-                        className={`text-[8px] font-extrabold px-1 rounded uppercase tracking-wider ${
-                          email.priority >= 90
-                            ? 'bg-rose-500/10 text-rose-600 border border-rose-100'
-                            : 'bg-amber-500/10 text-amber-600 border border-amber-100'
-                        }`}
-                      >
-                        {email.priority}% Priority
-                      </span>
-                      <span className="text-[8px] font-bold bg-slate-100 text-slate-400 px-1 rounded uppercase">
-                        {email.category}
-                      </span>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
+      <motion.section
+        id="demo"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={sectionVariants}
+        className="max-w-[1280px] mx-auto px-6 md:px-12 my-[120px] z-10 relative"
+      >
+        <div className="bg-white border border-[#EAE5DA] rounded-[22px] p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.015)]">
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+            <h2 className="text-3xl md:text-[44px] font-bold tracking-tight text-[#1D1D1D] leading-tight">
+              Click through a live pipeline simulation.
+            </h2>
+            <p className="text-sm text-[#6B7280]">
+              Select one of the mock emails in the folder to see how the
+              intelligence layer reasons, logs, and triggers actions.
+            </p>
           </div>
 
-          {/* AI Analysis Pane */}
-          <div className="lg:col-span-7 bg-white border border-slate-200/60 shadow-md rounded-3xl p-6 flex flex-col justify-between relative overflow-hidden text-left">
-            <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-bl from-indigo-500/5 to-transparent blur-2xl rounded-full" />
-
-            {/* Header info */}
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-5 text-left">
-                <span className="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
-                  <Cpu size={14} className="text-indigo-600 animate-pulse" />
-                  <span>AI Decision & Parsing Output</span>
+          {/* Demo container Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            {/* Simulated Inbox Folder */}
+            <div className="lg:col-span-5 bg-white border border-[#EAE5DA] rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] p-5 flex flex-col justify-start">
+              <div className="flex items-center justify-between pb-3 border-b border-[#EAE5DA] mb-4">
+                <span className="text-xs font-bold text-[#1D1D1D] uppercase flex items-center gap-1.5">
+                  <Inbox size={14} strokeWidth={1.5} className="text-[#5F6B38]" />
+                  <span>Simulated Inbound Stream</span>
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-[9px] text-slate-400 font-semibold">
-                    Matched Rule:
-                  </span>
-                  <span className="text-[9px] px-1.5 py-0.2 bg-slate-100 text-slate-600 rounded font-bold uppercase border border-slate-200">
-                    Auto-escalate
-                  </span>
-                </div>
+                <span className="text-[10px] text-[#6B7280]/60 font-semibold">
+                  3 unread messages
+                </span>
               </div>
 
-              {/* Content Panel */}
-              <div className="space-y-4">
-                {/* AI Summary */}
-                <div>
-                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                    AI Summary
-                  </h4>
-                  <p className="text-xs text-slate-700 leading-relaxed font-medium mt-1">
-                    {selectedEmail.summary}
-                  </p>
-                </div>
+              {/* Email list */}
+              <div className="space-y-2">
+                {mockEmails.map((email) => (
+                  <button
+                    key={email.id}
+                    onClick={() => {
+                      setSelectedEmail(email);
+                      setExecutedAction(null);
+                    }}
+                    className={`w-full text-left p-3.5 rounded-[14px] border transition-all duration-200 flex gap-3 ${
+                      selectedEmail.id === email.id
+                        ? 'bg-[#5F6B38]/5 border-[#5F6B38] shadow-[0_4px_15px_rgba(95,107,56,0.03)]'
+                        : 'bg-transparent border-transparent hover:border-[#EAE5DA] hover:bg-[#FAF7F2]'
+                    }`}
+                  >
+                    <Avatar
+                      name={email.sender}
+                      imageUrl={email.avatarUrl}
+                      size={32}
+                      className="rounded-full overflow-hidden"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-center">
+                        <p className="text-xs font-bold text-[#1D1D1D] truncate">
+                          {email.sender.split(' ')[0]}
+                        </p>
+                        <span className="text-[9px] text-[#6B7280]/60 font-medium">
+                          {email.time}
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-[#1D1D1D] truncate mt-0.5">
+                        {email.subject}
+                      </p>
+                      <p className="text-[10px] text-[#6B7280] truncate mt-0.5">
+                        {email.snippet}
+                      </p>
 
-                {/* Reasoning & Priority */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-y border-slate-100 py-3">
-                  <div>
-                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                      Reasoning & Logic
-                    </h4>
-                    <p className="text-[11px] text-slate-500 leading-normal mt-0.5">
-                      {selectedEmail.reasoning}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                      Extracted Deadline
-                    </h4>
-                    <p className="text-[11px] text-indigo-600 font-bold mt-1 flex items-center gap-1">
-                      <Clock size={11} />
-                      <span>
-                        {selectedEmail.deadline || 'No specific deadline found'}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Action Items */}
-                <div>
-                  <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">
-                    Extracted Action Items
-                  </h4>
-                  <ul className="mt-2 space-y-1.5">
-                    {selectedEmail.actionItems.map((item, idx) => (
-                      <li
-                        key={idx}
-                        className="text-xs text-slate-700 flex items-start gap-2"
-                      >
-                        <CheckCircle2
-                          size={13}
-                          className="text-indigo-600 mt-0.5 shrink-0"
-                        />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span
+                          className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded border ${
+                            email.priority >= 90
+                              ? 'bg-[#EF4444]/10 text-[#EF4444] border-[#EF4444]/20'
+                              : 'bg-[#FAF7F2] text-[#6B7280] border-[#EAE5DA]'
+                          }`}
+                        >
+                          {email.priority}% Priority
+                        </span>
+                        <span className="text-[8px] font-bold bg-[#FAF7F2] text-[#6B7280] px-1.5 py-0.5 rounded border border-[#EAE5DA]">
+                          {email.category}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Simulated Action Drawer */}
-            <div className="border-t border-slate-100 pt-5 mt-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">
-                    Suggested Automation Action
-                  </p>
-                  <p className="text-xs font-bold text-slate-800 mt-0.5">
-                    {selectedEmail.suggestedAction === 'calendar' &&
-                      '📅 Schedule calendar sync event'}
-                    {selectedEmail.suggestedAction === 'task' &&
-                      '📝 Append task item to developer backlog'}
-                    {selectedEmail.suggestedAction === 'whatsapp' &&
-                      '📲 Trigger instant WhatsApp notification'}
-                  </p>
+            {/* AI Analysis Pane */}
+            <div className="lg:col-span-7 bg-white border border-[#EAE5DA] rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] p-6 flex flex-col justify-between relative overflow-hidden text-left">
+              <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-bl from-[#E2B65C]/3 to-transparent blur-2xl rounded-full" />
+
+              {/* Header info */}
+              <div>
+                <div className="flex items-center justify-between pb-3 border-b border-[#EAE5DA] mb-5 text-left">
+                  <span className="text-xs font-bold text-[#1D1D1D] uppercase flex items-center gap-1.5">
+                    <Cpu size={14} strokeWidth={1.5} className="text-[#5F6B38] animate-pulse" />
+                    <span>AI Decision & Parsing Output</span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] text-[#6B7280]/60 font-semibold">
+                      Matched Rule:
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.5 bg-[#FAF7F2] text-[#6B7280] rounded-lg font-bold uppercase border border-[#EAE5DA]">
+                      Auto-escalate
+                    </span>
+                  </div>
                 </div>
 
-                {/* Execute CTA */}
-                <button
-                  onClick={() =>
-                    handleSimulateAction(selectedEmail.suggestedAction)
-                  }
-                  disabled={actionProgress}
-                  className="px-4.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-300 text-black font-black font-semibold text-xs transition-all shadow-sm flex items-center justify-center gap-1.5 self-end shrink-0"
-                >
-                  {actionProgress ? (
-                    <>
-                      <div className="h-3.5 w-3.5 border border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Dispatching...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap size={12} />
-                      <span>Run Pipeline Actions</span>
-                    </>
-                  )}
-                </button>
+                {/* Content Panel */}
+                <div className="space-y-4">
+                  {/* AI Summary */}
+                  <div>
+                    <h4 className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wide">
+                      AI Summary
+                    </h4>
+                    <p className="text-xs text-[#1D1D1D] leading-relaxed font-semibold mt-1">
+                      {selectedEmail.summary}
+                    </p>
+                  </div>
+
+                  {/* Reasoning & Priority */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-y border-[#EAE5DA] py-3">
+                    <div>
+                      <h4 className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wide">
+                        Reasoning & Logic
+                      </h4>
+                      <p className="text-[11px] text-[#6B7280] leading-relaxed mt-0.5">
+                        {selectedEmail.reasoning}
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wide">
+                        Extracted Deadline
+                      </h4>
+                      <p className="text-[11px] text-[#5F6B38] font-bold mt-1.5 flex items-center gap-1">
+                        <Clock size={11} strokeWidth={1.5} />
+                        <span>
+                          {selectedEmail.deadline || 'No specific deadline found'}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Action Items */}
+                  <div>
+                    <h4 className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wide">
+                      Extracted Action Items
+                    </h4>
+                    <ul className="mt-2 space-y-1.5">
+                      {selectedEmail.actionItems.map((item, idx) => (
+                        <li
+                          key={idx}
+                          className="text-xs text-[#1D1D1D] flex items-start gap-2"
+                        >
+                          <CheckCircle2
+                            size={13}
+                            strokeWidth={1.5}
+                            className="text-[#5F6B38] mt-0.5 shrink-0"
+                          />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
               </div>
 
-              {/* Toast message inside Card */}
-              <AnimatePresence>
-                {executedAction && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2"
+              {/* Simulated Action Drawer */}
+              <div className="border-t border-[#EAE5DA] pt-5 mt-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                  <div>
+                    <p className="text-[10px] font-bold text-[#6B7280] uppercase">
+                      Suggested Automation Action
+                    </p>
+                    <p className="text-xs font-bold text-[#1D1D1D] mt-0.5">
+                      {selectedEmail.suggestedAction === 'calendar' &&
+                        '📅 Schedule calendar sync event'}
+                      {selectedEmail.suggestedAction === 'task' &&
+                        '📝 Append task item to developer backlog'}
+                      {selectedEmail.suggestedAction === 'whatsapp' &&
+                        '📲 Trigger instant WhatsApp notification'}
+                    </p>
+                  </div>
+
+                  {/* Execute CTA */}
+                  <button
+                    onClick={() =>
+                      handleSimulateAction(selectedEmail.suggestedAction)
+                    }
+                    disabled={actionProgress}
+                    className="group h-10 px-4 rounded-[16px] bg-[#5F6B38] hover:bg-[#4F5A2F] disabled:bg-[#EAE5DA] disabled:text-[#6B7280] text-white font-semibold text-xs transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(95,107,56,0.25)] active:scale-95 flex items-center justify-center gap-2 self-end shrink-0"
                   >
-                    <CheckCircle2 size={14} className="text-emerald-600" />
-                    <span>{executedAction}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    {actionProgress ? (
+                      <>
+                        <div className="h-3.5 w-3.5 border border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Dispatching...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap size={12} strokeWidth={1.5} />
+                        <span>Run Pipeline Actions</span>
+                        <ArrowRight size={12} className="transition-transform duration-200 group-hover:translate-x-[5px]" />
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Toast message inside Card */}
+                <AnimatePresence>
+                  {executedAction && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="p-3 bg-[#5F6B38]/5 border border-[#5F6B38]/20 rounded-xl text-[#5F6B38] text-xs font-semibold flex items-center gap-2"
+                    >
+                      <CheckCircle2 size={14} strokeWidth={1.5} className="text-[#5F6B38]" />
+                      <span>{executedAction}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── Dashboard Mockup Section ───────────────────────────────────────────── */}
-      <section className="py-20 bg-slate-50 border-y border-slate-200/50 px-6 z-10 relative">
-        <div className="max-w-7xl mx-auto">
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={sectionVariants}
+        className="max-w-[1280px] mx-auto px-6 md:px-12 my-[120px] z-10 relative"
+      >
+        <div className="bg-white border border-[#EAE5DA] rounded-[22px] p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.015)]">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Visual Dashboard Container */}
             <div className="lg:col-span-7 relative flex justify-center">
-              <div className="w-full max-w-[540px] bg-[#080b14] rounded-3xl p-5 border border-white/10 shadow-2xl relative overflow-hidden">
+              <motion.div
+                animate={{ y: [0, -4, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                className="w-full max-w-[540px] bg-[#0A0D1A] rounded-[22px] p-5 border border-[#EAE5DA] shadow-[0_8px_30px_rgba(95,107,56,0.02)] relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:scale-[1.01] hover:shadow-[0_15px_30px_rgba(95,107,56,0.06)] hover:border-[#5F6B38]"
+              >
                 {/* Ambient glow */}
-                <div className="absolute top-[20%] left-[20%] w-48 h-48 bg-indigo-500/10 blur-[80px] rounded-full" />
+                <div className="absolute top-[20%] left-[20%] w-48 h-48 bg-[#5F6B38]/10 blur-[80px] rounded-full" />
 
                 {/* Header */}
-                <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-4">
+                <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center text-black font-black font-bold text-xs">
+                    <div className="w-6 h-6 rounded-lg bg-[#5F6B38] flex items-center justify-center text-white font-bold text-xs">
                       OS
                     </div>
-                    <span className="text-[10px] font-bold text-gray-700 font-bold uppercase tracking-widest">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                       InboxOS Workspace
                     </span>
                   </div>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold uppercase">
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-[#5F6B38]/10 border border-[#5F6B38]/20 text-[#5F6B38] font-bold uppercase">
                     Agent Engine Active
                   </span>
                 </div>
 
                 {/* Simulated metrics */}
                 <div className="grid grid-cols-3 gap-3 mb-4">
-                  <div className="bg-white border border-black border border-black rounded-xl p-2.5 text-left">
-                    <p className="text-[9px] text-gray-700 font-bold">Total Ingested</p>
-                    <p className="text-sm font-bold text-black font-black mt-1">1,284</p>
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-3 text-left">
+                    <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Total Ingested</p>
+                    <p className="text-lg font-bold text-white mt-1">1,284</p>
                   </div>
-                  <div className="bg-white border border-black border border-black rounded-xl p-2.5 text-left">
-                    <p className="text-[9px] text-gray-700 font-bold">Urgent Alerts</p>
-                    <p className="text-sm font-bold text-amber-400 mt-1">4</p>
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-3 text-left">
+                    <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Urgent Alerts</p>
+                    <p className="text-lg font-bold text-[#E2B65C] mt-1">4</p>
                   </div>
-                  <div className="bg-white border border-black border border-black rounded-xl p-2.5 text-left">
-                    <p className="text-[9px] text-gray-700 font-bold">Auto-Resolved</p>
-                    <p className="text-sm font-bold text-black font-black mt-1">84%</p>
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-3 text-left">
+                    <p className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">Auto-Resolved</p>
+                    <p className="text-lg font-bold text-[#5F6B38] mt-1">84%</p>
                   </div>
                 </div>
 
                 {/* Mock backlogs */}
                 <div className="space-y-2 text-left">
-                  <div className="bg-white border border-black rounded-xl p-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold text-blue-600">
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-3.5">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-bold text-[#E2B65C]">
                         sarah@startup.co
                       </span>
-                      <span className="text-[9px] text-gray-600 font-bold">
+                      <span className="text-[9px] text-slate-500 font-medium">
                         2 mins ago
                       </span>
                     </div>
-                    <p className="text-xs font-bold text-gray-200">
+                    <p className="text-xs text-slate-200 leading-relaxed font-medium">
                       Sarah requested moving sync to Wednesday at 2pm...
                     </p>
-                    <p className="text-[9px] text-gray-700 font-bold mt-1">
-                      AI Action: Scheduled calendar event Wednesday 2:00 PM
+                    <p className="text-[9px] text-[#5F6B38] font-semibold mt-1.5 flex items-center gap-1">
+                      <Check size={10} strokeWidth={1.5} />
+                      <span>AI Action: Scheduled calendar event Wednesday 2:00 PM</span>
                     </p>
                   </div>
-                  <div className="bg-white border border-black rounded-xl p-3 opacity-80">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold text-emerald-400">
+                  <div className="bg-white/5 border border-white/5 rounded-xl p-3.5 opacity-60">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-bold text-slate-400">
                         billing@aws.com
                       </span>
-                      <span className="text-[9px] text-gray-600 font-bold">
+                      <span className="text-[9px] text-slate-500 font-medium">
                         1 hour ago
                       </span>
                     </div>
-                    <p className="text-xs font-bold text-gray-200">
+                    <p className="text-xs text-slate-200 leading-relaxed font-medium">
                       Your invoice for June 2026 usage ($1,420.50) is now...
                     </p>
-                    <p className="text-[9px] text-gray-700 font-bold mt-1">
-                      AI Action: Created task backlogs in AWS logging
+                    <p className="text-[9px] text-[#5F6B38] font-semibold mt-1.5 flex items-center gap-1">
+                      <Check size={10} strokeWidth={1.5} />
+                      <span>AI Action: Created task backlogs in AWS logging</span>
                     </p>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* Text description */}
             <div className="lg:col-span-5 text-left space-y-5">
-              <h3 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-900 leading-tight">
+              <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-[#1D1D1D] leading-tight">
                 A unified diagnostic dashboard.
               </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
+              <p className="text-sm text-[#6B7280] leading-relaxed">
                 InboxOS processes emails in the background and logs all logical
                 resolutions in real-time. Review matched rules, execute tasks
                 manually, inspect connection logs, and edit routing scripts in
@@ -1274,24 +1644,27 @@ export const LandingPage: React.FC = () => {
               </p>
 
               <ul className="space-y-2.5 pt-2">
-                <li className="flex items-start gap-2 text-xs font-medium text-slate-700">
+                <li className="flex items-start gap-2 text-xs font-semibold text-[#6B7280]">
                   <Check
                     size={14}
-                    className="text-indigo-600 mt-0.5 shrink-0"
+                    strokeWidth={2}
+                    className="text-[#5F6B38] mt-0.5 shrink-0"
                   />
                   <span>Real-time WebSocket streaming updates</span>
                 </li>
-                <li className="flex items-start gap-2 text-xs font-medium text-slate-700">
+                <li className="flex items-start gap-2 text-xs font-semibold text-[#6B7280]">
                   <Check
                     size={14}
-                    className="text-indigo-600 mt-0.5 shrink-0"
+                    strokeWidth={2}
+                    className="text-[#5F6B38] mt-0.5 shrink-0"
                   />
                   <span>Rules engine diagnostic logs</span>
                 </li>
-                <li className="flex items-start gap-2 text-xs font-medium text-slate-700">
+                <li className="flex items-start gap-2 text-xs font-semibold text-[#6B7280]">
                   <Check
                     size={14}
-                    className="text-indigo-600 mt-0.5 shrink-0"
+                    strokeWidth={2}
+                    className="text-[#5F6B38] mt-0.5 shrink-0"
                   />
                   <span>Connected email stream configurations</span>
                 </li>
@@ -1299,335 +1672,407 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── Open Source Section ────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 max-w-7xl mx-auto z-10 relative">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          {/* Text Left */}
-          <div className="lg:col-span-6 text-left space-y-6">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-slate-600 font-bold text-[9px] tracking-wider uppercase">
-              <GithubIcon size={11} />
-              <span>Open Source & Modular</span>
-            </div>
-
-            <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
-              Built in the open. Built for everyone.
-            </h2>
-
-            <p className="text-sm text-slate-600 leading-relaxed">
-              InboxOS is completely open source and self-hostable. We decouple
-              ingestion connectors from the reasoning code. Want custom rules or
-              want to run entirely local LLMs? Check the codebase, deploy
-              manually using Docker, or write a plugin utilizing the InboxOS
-              SDK.
-            </p>
-
-            <div className="flex gap-3 pt-2">
-              <a
-                href="https://github.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-5 py-3 rounded-xl bg-slate-955 text-black font-black font-semibold text-xs transition-all hover:bg-slate-800 flex items-center justify-center gap-2"
-              >
-                <GithubIcon size={14} />
-                <span>Explore GitHub Repository</span>
-              </a>
-            </div>
-          </div>
-
-          {/* Interactive Monorepo Folder Tree Right */}
-          <div className="lg:col-span-6 relative flex justify-center">
-            <div className="w-full max-w-[480px] bg-white border border-white/10 rounded-2xl p-5 text-left font-mono text-[11px] text-gray-800 font-bold shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 blur-2xl rounded-full" />
-
-              <div className="flex items-center justify-between pb-3 border-b-4 border-black mb-4 text-gray-700 font-bold font-bold text-[10px] uppercase">
-                <span>📁 Repository Monorepo Structure</span>
-                <span>inboxos/inboxos</span>
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={sectionVariants}
+        className="max-w-[1280px] mx-auto px-6 md:px-12 my-[120px] z-10 relative"
+      >
+        <div className="bg-white border border-[#EAE5DA] rounded-[22px] p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.015)]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            {/* Text Left */}
+            <div className="lg:col-span-6 text-left space-y-6">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#FAF7F2] border border-[#EAE5DA] rounded-full text-[#6B7280] font-bold text-[9px] tracking-wider uppercase">
+                <GithubIcon size={11} />
+                <span>Open Source & Modular</span>
               </div>
 
-              {/* Tree structure */}
-              <div className="space-y-1.5 text-gray-800 font-bold">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600 font-bold">📁</span>
-                  <span className="text-blue-600 font-bold">apps/</span>
-                </div>
-                <div className="pl-6 flex items-center gap-2">
-                  <span className="text-gray-600 font-bold">📁</span>
-                  <span className="text-gray-200">api/</span>
-                  <span className="text-gray-600 font-bold text-[10px] italic">
-                    (FastAPI backend server)
-                  </span>
-                </div>
-                <div className="pl-6 flex items-center gap-2">
-                  <span className="text-gray-600 font-bold">📁</span>
-                  <span className="text-gray-200">web/</span>
-                  <span className="text-gray-600 font-bold text-[10px] italic">
-                    (Next.js / Vite dashboard)
-                  </span>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-[#1D1D1D] leading-tight">
+                Built in the open. Built for everyone.
+              </h2>
+
+              <p className="text-sm text-[#6B7280] leading-relaxed">
+                InboxOS is completely open source and self-hostable. We decouple
+                ingestion connectors from the reasoning code. Want custom rules or
+                want to run entirely local LLMs? Check the codebase, deploy
+                manually using Docker, or write a plugin utilizing the InboxOS
+                SDK.
+              </p>
+
+              <div className="flex gap-3 pt-2">
+                <a
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-[48px] px-6 text-[15px] font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-[16px] transition-all hover:-translate-y-0.5 active:translate-y-0 shadow-sm flex items-center justify-center gap-2"
+                >
+                  <GithubIcon size={14} />
+                  <span>Explore GitHub Repository</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Interactive Monorepo Folder Tree Right */}
+            <div className="lg:col-span-6 relative flex justify-center">
+              <div className="w-full max-w-[480px] bg-white border border-[#EAE5DA] rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] p-6 text-left font-mono text-[11px] text-[#1D1D1D] relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-[#5F6B38]/3 blur-2xl rounded-full" />
+
+                <div className="flex items-center justify-between pb-3 border-b border-[#EAE5DA] mb-4 text-[#6B7280] font-bold text-[10px] uppercase">
+                  <span>📁 Repository Monorepo Structure</span>
+                  <span>inboxos/inboxos</span>
                 </div>
 
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-gray-600 font-bold">📁</span>
-                  <span className="text-blue-600 font-bold">config/</span>
-                </div>
-                <div className="pl-6 flex items-center gap-2">
-                  <span className="text-gray-600 font-bold">📁</span>
-                  <span className="text-gray-200">docker/</span>
-                  <span className="text-gray-600 font-bold text-[10px] italic">
-                    (Compose stacks)
-                  </span>
-                </div>
-                <div className="pl-6 flex items-center gap-2">
-                  <span className="text-gray-600 font-bold">📁</span>
-                  <span className="text-gray-200">env/</span>
-                  <span className="text-gray-600 font-bold text-[10px] italic">
-                    (.env configuration options)
-                  </span>
-                </div>
+                {/* Tree structure */}
+                <div className="space-y-1.5 text-[#1D1D1D] font-medium">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#5F6B38]">📁</span>
+                    <span className="text-[#5F6B38] font-semibold">apps/</span>
+                  </div>
+                  <div className="pl-6 flex items-center gap-2">
+                    <span className="text-[#6B7280]">📁</span>
+                    <span className="text-[#1D1D1D]">api/</span>
+                    <span className="text-[#6B7280]/70 text-[10px] italic">
+                      (FastAPI backend server)
+                    </span>
+                  </div>
+                  <div className="pl-6 flex items-center gap-2">
+                    <span className="text-[#6B7280]">📁</span>
+                    <span className="text-[#1D1D1D]">web/</span>
+                    <span className="text-[#6B7280]/70 text-[10px] italic">
+                      (Next.js / Vite dashboard)
+                    </span>
+                  </div>
 
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-gray-600 font-bold">📁</span>
-                  <span className="text-blue-600 font-bold">packages/</span>
-                </div>
-                <div className="pl-6 flex items-center gap-2">
-                  <span className="text-gray-600 font-bold">📁</span>
-                  <span className="text-gray-200">rules/</span>
-                  <span className="text-gray-600 font-bold text-[10px] italic">
-                    (DSL parser utilities)
-                  </span>
-                </div>
-                <div className="pl-6 flex items-center gap-2">
-                  <span className="text-gray-600 font-bold">📁</span>
-                  <span className="text-gray-200">plugins/</span>
-                  <span className="text-gray-600 font-bold text-[10px] italic">
-                    (Ingestion SDK connector)
-                  </span>
-                </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[#5F6B38]">📁</span>
+                    <span className="text-[#5F6B38] font-semibold">config/</span>
+                  </div>
+                  <div className="pl-6 flex items-center gap-2">
+                    <span className="text-[#6B7280]">📁</span>
+                    <span className="text-[#1D1D1D]">docker/</span>
+                    <span className="text-[#6B7280]/70 text-[10px] italic">
+                      (Compose stacks)
+                    </span>
+                  </div>
+                  <div className="pl-6 flex items-center gap-2">
+                    <span className="text-[#6B7280]">📁</span>
+                    <span className="text-[#1D1D1D]">env/</span>
+                    <span className="text-[#6B7280]/70 text-[10px] italic">
+                      (.env configuration options)
+                    </span>
+                  </div>
 
-                <div className="flex items-center gap-2 mt-2 pt-2 border-t-4 border-black">
-                  <span className="text-gray-600 font-bold">📄</span>
-                  <span className="text-emerald-400 font-semibold">
-                    docker-compose.yml
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600 font-bold">📄</span>
-                  <span className="text-gray-700 font-bold">README.md</span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-[#5F6B38]">📁</span>
+                    <span className="text-[#5F6B38] font-semibold">packages/</span>
+                  </div>
+                  <div className="pl-6 flex items-center gap-2">
+                    <span className="text-[#6B7280]">📁</span>
+                    <span className="text-[#1D1D1D]">rules/</span>
+                    <span className="text-[#6B7280]/70 text-[10px] italic">
+                      (DSL parser utilities)
+                    </span>
+                  </div>
+                  <div className="pl-6 flex items-center gap-2">
+                    <span className="text-[#6B7280]">📁</span>
+                    <span className="text-[#1D1D1D]">plugins/</span>
+                    <span className="text-[#6B7280]/70 text-[10px] italic">
+                      (Ingestion SDK connector)
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#EAE5DA]">
+                    <span className="text-[#6B7280]">📄</span>
+                    <span className="text-[#5F6B38] font-semibold">
+                      docker-compose.yml
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#6B7280]">📄</span>
+                    <span className="text-[#1D1D1D]">README.md</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── Testimonials Section ───────────────────────────────────────────────── */}
-      <section className="py-20 bg-slate-50 border-y border-slate-200/50 px-6 z-10 relative">
-        <div className="max-w-7xl mx-auto">
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={sectionVariants}
+        className="max-w-[1280px] mx-auto px-6 md:px-12 my-[120px] z-10 relative"
+      >
+        <div className="bg-white border border-[#EAE5DA] rounded-[22px] p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.015)]">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            <h2 className="text-3xl md:text-[44px] font-bold tracking-tight text-[#1D1D1D] leading-tight">
               Trusted by operators who run on email.
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-[#6B7280]">
               See how operations leaders, recruiters, and startup founders are
               using email decision layers to save hours of manual check times.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white border border-slate-200/60 p-6 rounded-2xl shadow-sm text-left flex flex-col justify-between">
-              <p className="text-xs text-slate-600 leading-relaxed italic">
+            <motion.div
+              variants={itemVariants}
+              className="group bg-white border border-[#EAE5DA] p-6 rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-300 hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-left flex flex-col justify-between relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[#5F6B38]/1 to-[#5F6B38]/3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              <span className="absolute top-4 right-6 text-[80px] font-serif text-[#5F6B38]/10 group-hover:opacity-0 transition-opacity duration-300 select-none pointer-events-none leading-none">“</span>
+              
+              <p className="text-xs text-[#6B7280] leading-relaxed italic relative z-10">
                 "InboxOS changed everything for us. Critical infrastructure
                 downtime reports from our servers are picked up, analyzed, and
                 escalated to our Slack and WhatsApp teams within 10 seconds. I
                 don't need to check dashboards constantly anymore."
               </p>
-              <div className="flex items-center gap-3 mt-6 border-t border-slate-100 pt-4">
-                <Avatar name="Mark Henderson" size={36} />
+              <div className="flex items-center gap-3 mt-6 border-t border-[#EAE5DA] pt-4 relative z-10">
+                <div className="rounded-full ring-2 ring-transparent group-hover:ring-[#5F6B38] transition-all duration-300 p-0.5 shrink-0">
+                  <Avatar name="Mark Henderson" size={36} className="rounded-full overflow-hidden" />
+                </div>
                 <div>
-                  <h5 className="text-xs font-bold text-slate-800">
+                  <h5 className="text-xs font-bold text-[#1D1D1D]">
                     Mark Henderson
                   </h5>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-[#6B7280]/70">
                     Director of Systems, NetCorp
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-white border border-slate-200/60 p-6 rounded-2xl shadow-sm text-left flex flex-col justify-between">
-              <p className="text-xs text-slate-600 leading-relaxed italic">
+            <motion.div
+              variants={itemVariants}
+              className="group bg-white border border-[#EAE5DA] p-6 rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-300 hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-left flex flex-col justify-between relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[#5F6B38]/1 to-[#5F6B38]/3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              <span className="absolute top-4 right-6 text-[80px] font-serif text-[#5F6B38]/10 group-hover:opacity-0 transition-opacity duration-300 select-none pointer-events-none leading-none">“</span>
+
+              <p className="text-xs text-[#6B7280] leading-relaxed italic relative z-10">
                 "As a recruiter, my inbox gets flooded with hundreds of
                 portfolios. InboxOS parses candidate sheets, calculates
                 candidate match ratios using local Ollama model processing, and
                 populates candidates directly inside my applicant spreadsheet
                 automatically."
               </p>
-              <div className="flex items-center gap-3 mt-6 border-t border-slate-100 pt-4">
-                <Avatar name="Alisha Robinson" size={36} />
+              <div className="flex items-center gap-3 mt-6 border-t border-[#EAE5DA] pt-4 relative z-10">
+                <div className="rounded-full ring-2 ring-transparent group-hover:ring-[#5F6B38] transition-all duration-300 p-0.5 shrink-0">
+                  <Avatar name="Alisha Robinson" size={36} className="rounded-full overflow-hidden" />
+                </div>
                 <div>
-                  <h5 className="text-xs font-bold text-slate-800">
+                  <h5 className="text-xs font-bold text-[#1D1D1D]">
                     Alisha Robinson
                   </h5>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-[#6B7280]/70">
                     Lead Recruiting Partner, TalentGrid
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="bg-white border border-slate-200/60 p-6 rounded-2xl shadow-sm text-left flex flex-col justify-between">
-              <p className="text-xs text-slate-600 leading-relaxed italic">
+            <motion.div
+              variants={itemVariants}
+              className="group bg-white border border-[#EAE5DA] p-6 rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] transition-all duration-300 hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38] text-left flex flex-col justify-between relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-[#5F6B38]/1 to-[#5F6B38]/3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              <span className="absolute top-4 right-6 text-[80px] font-serif text-[#5F6B38]/10 group-hover:opacity-0 transition-opacity duration-300 select-none pointer-events-none leading-none">“</span>
+
+              <p className="text-xs text-[#6B7280] leading-relaxed italic relative z-10">
                 "I run multiple businesses and used to miss invoice payment
                 updates or customer calendar changes constantly. InboxOS routing
                 rules process finance receipts to our accounting channels, while
                 scheduling meetings automatically."
               </p>
-              <div className="flex items-center gap-3 mt-6 border-t border-slate-100 pt-4">
-                <Avatar name="Thomas Loe" size={36} />
+              <div className="flex items-center gap-3 mt-6 border-t border-[#EAE5DA] pt-4 relative z-10">
+                <div className="rounded-full ring-2 ring-transparent group-hover:ring-[#5F6B38] transition-all duration-300 p-0.5 shrink-0">
+                  <Avatar name="Thomas Loe" size={36} className="rounded-full overflow-hidden" />
+                </div>
                 <div>
-                  <h5 className="text-xs font-bold text-slate-800">
+                  <h5 className="text-xs font-bold text-[#1D1D1D]">
                     Thomas Loe
                   </h5>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-[#6B7280]/70">
                     Serial Founder & Investor
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── Comparison Section ─────────────────────────────────────────────────── */}
-      <section
+      <motion.section
         id="comparison"
-        className="py-24 px-6 max-w-4xl mx-auto z-10 relative"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={sectionVariants}
+        className="max-w-[1280px] mx-auto px-6 md:px-12 my-[120px] z-10 relative"
       >
-        <div className="text-center mb-16 space-y-4">
-          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
-            Decoupling email from manual labor.
-          </h2>
-          <p className="text-sm text-slate-500">
-            A side-by-side comparison of old-school email management vs. the
-            InboxOS active automation workflow.
-          </p>
+        <div className="bg-white border border-[#EAE5DA] rounded-[22px] p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.015)]">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-3xl md:text-[44px] font-bold tracking-tight text-[#1D1D1D] leading-tight">
+              Decoupling email from manual labor.
+            </h2>
+            <p className="text-sm text-[#6B7280]">
+              A side-by-side comparison of old-school email management vs. the
+              InboxOS active automation workflow.
+            </p>
+          </div>
+
+          <div className="border border-[#EAE5DA] rounded-[22px] shadow-[0_8px_30px_rgba(95,107,56,0.02)] overflow-hidden text-left bg-white max-w-4xl mx-auto transition-all duration-[250ms] hover:-translate-y-[6px] hover:shadow-[0_20px_40px_rgba(95,107,56,0.08)] hover:border-[#5F6B38]">
+            <table className="w-full text-left border-collapse rounded-t-[22px]">
+              <thead>
+                <tr className="bg-[#FAF7F2] border-b border-[#EAE5DA]">
+                  <th className="p-4 text-xs font-bold text-[#6B7280] uppercase tracking-widest flex items-center gap-2">
+                    <Cpu size={14} className="text-[#E2B65C]" />
+                    <span>Capabilities</span>
+                  </th>
+                  <th className="p-4 text-xs font-bold text-[#6B7280]/80 uppercase tracking-widest">
+                    Traditional Client
+                  </th>
+                  <th className="p-4 text-xs font-bold text-[#5F6B38] uppercase tracking-widest">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles size={14} className="text-[#5F6B38] animate-pulse" />
+                      <span>InboxOS</span>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#EAE5DA] text-xs text-[#1D1D1D] bg-white">
+                <tr className="group hover:bg-[#FAF7F2]/60 transition-colors duration-250">
+                  <td className="p-4 font-bold text-[#1D1D1D] border-l-4 border-l-transparent group-hover:border-l-[#5F6B38] transition-all duration-250">
+                    Email Processing
+                  </td>
+                  <td className="p-4 text-[#6B7280]">
+                    <div className="flex items-center gap-2">
+                      <Minus size={14} className="text-[#E2B65C] shrink-0" />
+                      <span>Manually read and search everything</span>
+                    </div>
+                  </td>
+                  <td className="p-4 text-[#5F6B38] font-semibold">
+                    <span className="flex items-center gap-1.5">
+                      <Check size={14} strokeWidth={2.5} className="text-[#5F6B38] shrink-0" />
+                      <span>Parses content contextually using LLMs</span>
+                    </span>
+                  </td>
+                </tr>
+
+                <tr className="group hover:bg-[#FAF7F2]/60 transition-colors duration-250">
+                  <td className="p-4 font-bold text-[#1D1D1D] border-l-4 border-l-transparent group-hover:border-l-[#5F6B38] transition-all duration-250">
+                    Priority Evaluation
+                  </td>
+                  <td className="p-4 text-[#6B7280]">
+                    <div className="flex items-center gap-2">
+                      <Minus size={14} className="text-[#E2B65C] shrink-0" />
+                      <span>Flat chronological listing / basic label rules</span>
+                    </div>
+                  </td>
+                  <td className="p-4 text-[#5F6B38] font-semibold">
+                    <span className="flex items-center gap-1.5">
+                      <Check size={14} strokeWidth={2.5} className="text-[#5F6B38] shrink-0" />
+                      <span>Granular priority index score (0–100)</span>
+                    </span>
+                  </td>
+                </tr>
+
+                <tr className="group hover:bg-[#FAF7F2]/60 transition-colors duration-250">
+                  <td className="p-4 font-bold text-[#1D1D1D] border-l-4 border-l-transparent group-hover:border-l-[#5F6B38] transition-all duration-250">
+                    Automation Action
+                  </td>
+                  <td className="p-4 text-[#6B7280]">
+                    <div className="flex items-center gap-2">
+                      <Minus size={14} className="text-[#E2B65C] shrink-0" />
+                      <span>Open separate calendars and manually copy/paste</span>
+                    </div>
+                  </td>
+                  <td className="p-4 text-[#5F6B38] font-semibold">
+                    <span className="flex items-center gap-1.5">
+                      <Check size={14} strokeWidth={2.5} className="text-[#5F6B38] shrink-0" />
+                      <span>Automatically triggers API dispatches</span>
+                    </span>
+                  </td>
+                </tr>
+
+                <tr className="group hover:bg-[#FAF7F2]/60 transition-colors duration-250">
+                  <td className="p-4 font-bold text-[#1D1D1D] border-l-4 border-l-transparent group-hover:border-l-[#5F6B38] transition-all duration-250">
+                    Routing Rules Engine
+                  </td>
+                  <td className="p-4 text-[#6B7280]">
+                    <div className="flex items-center gap-2">
+                      <Minus size={14} className="text-[#E2B65C] shrink-0" />
+                      <span>Static string-matching sender filters</span>
+                    </div>
+                  </td>
+                  <td className="p-4 text-[#5F6B38] font-semibold">
+                    <span className="flex items-center gap-1.5">
+                      <Check size={14} strokeWidth={2.5} className="text-[#5F6B38] shrink-0" />
+                      <span>DSL boolean scripts with dynamic condition maps</span>
+                    </span>
+                  </td>
+                </tr>
+
+                <tr className="group hover:bg-[#FAF7F2]/60 transition-colors duration-250">
+                  <td className="p-4 font-bold text-[#1D1D1D] border-l-4 border-l-transparent group-hover:border-l-[#5F6B38] transition-all duration-250">
+                    Security & Privacy
+                  </td>
+                  <td className="p-4 text-[#6B7280]">
+                    <div className="flex items-center gap-2">
+                      <Minus size={14} className="text-[#E2B65C] shrink-0" />
+                      <span>Hosted servers store & index logs online</span>
+                    </div>
+                  </td>
+                  <td className="p-4 text-[#5F6B38] font-semibold">
+                    <span className="flex items-center gap-1.5">
+                      <Check size={14} strokeWidth={2.5} className="text-[#5F6B38] shrink-0" />
+                      <span>Self-hostable, runs entirely local models</span>
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
-
-        <div className="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden text-left">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="p-4 text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  Capabilities
-                </th>
-                <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                  Traditional Email Client
-                </th>
-                <th className="p-4 text-xs font-bold text-indigo-600 uppercase tracking-widest">
-                  InboxOS Operating System
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              <tr>
-                <td className="p-4 font-bold text-slate-800">
-                  Email Processing
-                </td>
-                <td className="p-4 text-slate-500">
-                  Manually read and search everything
-                </td>
-                <td className="p-4 text-indigo-600 font-semibold">
-                  <span className="flex items-center gap-1.5">
-                    <Check size={14} /> Parses content contextually using LLMs
-                  </span>
-                </td>
-              </tr>
-
-              <tr>
-                <td className="p-4 font-bold text-slate-800">
-                  Priority Evaluation
-                </td>
-                <td className="p-4 text-slate-500">
-                  Flat chronological listing / basic label rules
-                </td>
-                <td className="p-4 text-indigo-600 font-semibold">
-                  <span className="flex items-center gap-1.5">
-                    <Check size={14} /> Granular priority index score (0–100)
-                  </span>
-                </td>
-              </tr>
-
-              <tr>
-                <td className="p-4 font-bold text-slate-800">
-                  Automation Action
-                </td>
-                <td className="p-4 text-slate-500">
-                  Open separate calendars and manually copy/paste
-                </td>
-                <td className="p-4 text-indigo-600 font-semibold">
-                  <span className="flex items-center gap-1.5">
-                    <Check size={14} /> Automatically triggers API dispatches
-                  </span>
-                </td>
-              </tr>
-
-              <tr>
-                <td className="p-4 font-bold text-slate-800">
-                  Routing Rules Engine
-                </td>
-                <td className="p-4 text-slate-500">
-                  Static string-matching sender filters
-                </td>
-                <td className="p-4 text-indigo-600 font-semibold">
-                  <span className="flex items-center gap-1.5">
-                    <Check size={14} /> DSL boolean scripts with dynamic
-                    condition maps
-                  </span>
-                </td>
-              </tr>
-
-              <tr>
-                <td className="p-4 font-bold text-slate-800">
-                  Security & Privacy
-                </td>
-                <td className="p-4 text-slate-500">
-                  Hosted servers store & index logs online
-                </td>
-                <td className="p-4 text-indigo-600 font-semibold">
-                  <span className="flex items-center gap-1.5">
-                    <Check size={14} /> Self-hostable, runs entirely local
-                    models
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
+      </motion.section>
 
       {/* ── Final CTA Section ──────────────────────────────────────────────────── */}
-      <section className="py-24 px-6 z-10 relative">
-        <div className="max-w-4xl mx-auto text-center bg-gradient-to-tr from-indigo-900 to-violet-900 rounded-3xl p-12 text-black font-black shadow-2xl relative overflow-hidden">
-          <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.05] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:16px_16px]" />
-          <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-indigo-500/10 to-transparent blur-3xl" />
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-100px" }}
+        variants={sectionVariants}
+        className="max-w-[1280px] mx-auto px-6 md:px-12 my-[120px] z-10 relative"
+      >
+        <div className="text-center bg-[#5F6B38] border border-[#EAE5DA] rounded-[22px] p-12 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute inset-0 z-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:16px_16px]" />
+          <div className="absolute top-0 left-0 right-0 h-48 bg-[#E2B65C]/20 to-transparent blur-3xl" />
 
           <div className="relative z-10 space-y-7">
-            <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-none">
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight leading-none text-white">
               Stop managing email.
               <br />
-              Start running an AI Inbox.
+              <span className="opacity-90">Start running an AI Inbox.</span>
             </h2>
-            <p className="text-sm text-indigo-200/90 leading-relaxed max-w-lg mx-auto">
+            <p className="text-sm text-indigo-100/80 leading-relaxed max-w-lg mx-auto">
               Ready to decouple from manual email sorting? Get started with our
               hosted sandbox account or deploy the Docker repository on your own
               server.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2 max-w-md mx-auto">
               <button
                 onClick={() => navigate('/login')}
-                className="w-full sm:w-auto px-6 py-3.5 text-xs font-semibold text-indigo-955 bg-white hover:bg-slate-100 rounded-2xl transition-all shadow-lg active:scale-98"
+                className="w-full sm:w-auto h-[48px] px-6 text-[15px] font-semibold text-[#5F6B38] bg-white hover:bg-slate-50 rounded-[16px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(255,255,255,0.25)] active:scale-95 flex items-center justify-center"
               >
                 Get Started Free
               </button>
@@ -1635,7 +2080,7 @@ export const LandingPage: React.FC = () => {
                 href="https://github.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full sm:w-auto px-6 py-3.5 text-xs font-semibold text-black font-black bg-white border border-black shadow-[2px_2px_0_0_#111] hover:bg-white/15 border border-white/10 rounded-2xl transition-all flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto h-[48px] px-6 text-[15px] font-semibold text-white bg-transparent border border-white/30 hover:bg-white/10 rounded-[16px] transition-all duration-200 hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-1.5"
               >
                 <GithubIcon size={14} />
                 <span>Explore GitHub</span>
@@ -1643,37 +2088,59 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* ── Footer Section ─────────────────────────────────────────────────────── */}
-      <footer className="bg-white text-slate-400 py-16 px-6 border-t border-slate-800 z-10 relative">
-        <div className="max-w-7xl mx-auto">
+      <footer className="bg-[#FAF7F2] text-[#6B7280] pt-28 pb-20 px-8 border-t border-[#EAE5DA] z-10 relative">
+        <div className="max-w-[1280px] mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
-            {/* Logo details */}
-            <div className="col-span-2 space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-600 shadow">
-                  <Sparkles size={14} className="text-black font-black" />
+            {/* Logo Section */}
+            <div className="col-span-2 space-y-6 text-left flex flex-col justify-start">
+              {/* Logo */}
+              <div
+                className="flex items-center gap-3 cursor-pointer select-none"
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              >
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#5F6B38] shadow-sm">
+                  <Sparkles size={14} strokeWidth={1.5} className="text-white" />
                 </div>
-                <h4 className="text-sm font-bold text-black font-black">InboxOS</h4>
+                <h4 className="text-sm font-bold text-[#1D1D1D]">InboxOS</h4>
               </div>
-              <p className="text-xs text-slate-500 leading-relaxed max-w-xs text-left">
+
+              {/* Company description */}
+              <p className="text-xs text-[#6B7280]/85 leading-relaxed max-w-xs">
                 The decision and execution layer sitting above Gmail and
                 Outlook. Built open source with privacy as a first class
                 concern.
               </p>
+
+              {/* Social Icons */}
+              <div className="flex items-center gap-3 pt-2">
+                <SocialIcon href="https://github.com" ariaLabel="GitHub">
+                  <GithubIcon size={16} />
+                </SocialIcon>
+                <SocialIcon href="https://discord.com" ariaLabel="Discord">
+                  <DiscordIcon size={16} />
+                </SocialIcon>
+                <SocialIcon href="https://linkedin.com" ariaLabel="LinkedIn">
+                  <LinkedinIcon size={16} />
+                </SocialIcon>
+                <SocialIcon href="https://twitter.com" ariaLabel="Twitter / X">
+                  <XIcon size={14} />
+                </SocialIcon>
+              </div>
             </div>
 
-            {/* Links columns */}
+            {/* Link Columns */}
             <div className="text-left">
-              <h5 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">
+              <h5 className="text-[12px] font-bold uppercase tracking-[0.1em] text-[#6B7280]/80 mb-5">
                 Product
               </h5>
-              <ul className="space-y-2 text-xs">
+              <ul className="space-y-3 text-[14px]">
                 <li>
                   <a
                     href="#features"
-                    className="hover:text-black font-black transition-colors"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     Features
                   </a>
@@ -1681,7 +2148,7 @@ export const LandingPage: React.FC = () => {
                 <li>
                   <a
                     href="#pipeline"
-                    className="hover:text-black font-black transition-colors"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     AI Pipeline
                   </a>
@@ -1689,7 +2156,7 @@ export const LandingPage: React.FC = () => {
                 <li>
                   <a
                     href="#demo"
-                    className="hover:text-black font-black transition-colors"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     Interactive Demo
                   </a>
@@ -1697,7 +2164,7 @@ export const LandingPage: React.FC = () => {
                 <li>
                   <a
                     href="#comparison"
-                    className="hover:text-black font-black transition-colors"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     Comparisons
                   </a>
@@ -1706,14 +2173,16 @@ export const LandingPage: React.FC = () => {
             </div>
 
             <div className="text-left">
-              <h5 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">
+              <h5 className="text-[12px] font-bold uppercase tracking-[0.1em] text-[#6B7280]/80 mb-5">
                 Developers
               </h5>
-              <ul className="space-y-2 text-xs">
+              <ul className="space-y-3 text-[14px]">
                 <li>
                   <a
                     href="https://github.com"
-                    className="hover:text-black font-black transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     GitHub Repository
                   </a>
@@ -1721,7 +2190,9 @@ export const LandingPage: React.FC = () => {
                 <li>
                   <a
                     href="https://github.com"
-                    className="hover:text-black font-black transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     Monorepo Guide
                   </a>
@@ -1729,7 +2200,9 @@ export const LandingPage: React.FC = () => {
                 <li>
                   <a
                     href="https://github.com"
-                    className="hover:text-black font-black transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     Plugin SDK
                   </a>
@@ -1737,23 +2210,27 @@ export const LandingPage: React.FC = () => {
                 <li>
                   <a
                     href="https://github.com"
-                    className="hover:text-black font-black transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
-                    Rules DSL Documentation
+                    Rules DSL Docs
                   </a>
                 </li>
               </ul>
             </div>
 
             <div className="text-left">
-              <h5 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">
+              <h5 className="text-[12px] font-bold uppercase tracking-[0.1em] text-[#6B7280]/80 mb-5">
                 Resources
               </h5>
-              <ul className="space-y-2 text-xs">
+              <ul className="space-y-3 text-[14px]">
                 <li>
                   <a
                     href="https://github.com"
-                    className="hover:text-black font-black transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     Self-Host Guide
                   </a>
@@ -1761,7 +2238,9 @@ export const LandingPage: React.FC = () => {
                 <li>
                   <a
                     href="https://github.com"
-                    className="hover:text-black font-black transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     Docker Stacks
                   </a>
@@ -1769,7 +2248,9 @@ export const LandingPage: React.FC = () => {
                 <li>
                   <a
                     href="https://github.com"
-                    className="hover:text-black font-black transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     Ollama Local Setup
                   </a>
@@ -1777,7 +2258,9 @@ export const LandingPage: React.FC = () => {
                 <li>
                   <a
                     href="https://github.com"
-                    className="hover:text-black font-black transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     API Docs
                   </a>
@@ -1786,14 +2269,16 @@ export const LandingPage: React.FC = () => {
             </div>
 
             <div className="text-left">
-              <h5 className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-4">
+              <h5 className="text-[12px] font-bold uppercase tracking-[0.1em] text-[#6B7280]/80 mb-5">
                 Licensing
               </h5>
-              <ul className="space-y-2 text-xs">
+              <ul className="space-y-3 text-[14px]">
                 <li>
                   <a
                     href="https://github.com"
-                    className="hover:text-black font-black transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     MIT License
                   </a>
@@ -1801,7 +2286,9 @@ export const LandingPage: React.FC = () => {
                 <li>
                   <a
                     href="https://github.com"
-                    className="hover:text-black font-black transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     Terms of Service
                   </a>
@@ -1809,7 +2296,9 @@ export const LandingPage: React.FC = () => {
                 <li>
                   <a
                     href="https://github.com"
-                    className="hover:text-black font-black transition-colors"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#6B7280] hover:text-[#5F6B38] hover:translate-x-[4px] duration-200 transition-all flex items-center"
                   >
                     Privacy Policy
                   </a>
@@ -1818,28 +2307,43 @@ export const LandingPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between text-[11px] text-slate-600 gap-4">
-            <p>
-              &copy; {new Date().getFullYear()} InboxOS Open Source
-              Contributors. All rights reserved.
-            </p>
-            <div className="flex gap-4">
+          {/* Bottom Bar */}
+          <div className="mt-12 pt-8 border-t border-[#EAE5DA] flex flex-col md:flex-row items-center justify-between text-xs text-[#6B7280]/60 gap-6">
+            <div>
+              <p>&copy; 2026 InboxOS.</p>
+            </div>
+            <div className="flex gap-6 items-center">
               <a
                 href="https://github.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-slate-400 transition-colors"
+                className="hover:text-[#5F6B38] transition-colors duration-200 font-medium text-[#6B7280]/70"
               >
-                GitHub
+                MIT License
               </a>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#EAE5DA]" />
               <a
                 href="https://github.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-slate-400 transition-colors"
+                className="hover:text-[#5F6B38] transition-colors duration-200 font-medium text-[#6B7280]/70"
               >
-                Slack Community
+                Privacy
               </a>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#EAE5DA]" />
+              <a
+                href="https://github.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#5F6B38] transition-colors duration-200 font-medium text-[#6B7280]/70"
+              >
+                Terms
+              </a>
+            </div>
+            <div className="flex items-center">
+              <span className="px-2.5 py-1 text-[11px] font-bold text-[#E2B65C] bg-[#E2B65C]/5 rounded-full border border-[#E2B65C]/20 select-none">
+                v1.0.0
+              </span>
             </div>
           </div>
         </div>

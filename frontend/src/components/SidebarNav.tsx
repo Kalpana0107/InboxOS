@@ -28,29 +28,29 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
     {
       path: '/dashboard',
       label: 'Inbox',
-      icon: <Inbox size={17} />,
+      icon: <Inbox size={16} />,
       count: 14,
     },
     {
       path: '/dashboard/tasks',
-      label: 'Dashboard Tasks',
-      icon: <CheckSquare size={17} />,
+      label: 'Tasks',
+      icon: <CheckSquare size={16} />,
       count: 5,
     },
     {
       path: '/dashboard/rules',
       label: 'Routing Rules',
-      icon: <Zap size={17} />,
+      icon: <Zap size={16} />,
     },
     {
       path: '/dashboard/settings?tab=integrations',
       label: 'Integrations',
-      icon: <Activity size={17} />,
+      icon: <Activity size={16} />,
     },
     {
       path: '/dashboard/settings',
       label: 'Preferences',
-      icon: <Settings size={17} />,
+      icon: <Settings size={16} />,
     },
   ];
 
@@ -80,29 +80,26 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
 
   return (
     <div className="flex flex-col h-full flex-1" style={{ backgroundColor: 'var(--color-surface)' }}>
-      {/* ── Brand Logo Header ─────────────────────────────────────────────────── */}
+      {/* ── Brand Logo ──────────────────────────────────────────────────── */}
       <div className={`flex items-center justify-between ${isMobile ? 'pb-4 mb-2' : 'px-5 py-5'}`}>
         <div className="flex items-center gap-2.5">
-          {/* Logo mark: solid yellow box with black sparkles */}
+          {/* Logo mark: olive rounded */}
           <div
-            className="flex items-center justify-center w-9 h-9 shrink-0"
-            style={{
-              backgroundColor: 'var(--color-accent)',
-              border: '1px solid var(--color-ink)',
-            }}
+            className="flex items-center justify-center w-8 h-8 rounded-[10px] shrink-0"
+            style={{ backgroundColor: 'var(--color-primary)' }}
           >
-            <Sparkles size={18} className="text-black" fill="currentColor" />
+            <Sparkles size={15} className="text-white" fill="white" />
           </div>
           <div className="text-left">
             <h1
-              className="text-base leading-none font-black"
+              className="text-[15px] leading-none font-bold tracking-tight"
               style={{ fontFamily: 'var(--font-display)', color: 'var(--color-ink)' }}
             >
               InboxOS
             </h1>
             <span
-              className="text-[9px] font-black tracking-widest uppercase block mt-0.5"
-              style={{ color: 'var(--color-ink)', opacity: 0.8 }}
+              className="text-[10px] font-medium tracking-wide block mt-0.5"
+              style={{ color: 'var(--color-muted)' }}
             >
               Decision Layer
             </span>
@@ -112,153 +109,144 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
         {isMobile && onCloseMobileMenu && (
           <button
             onClick={onCloseMobileMenu}
-            className="p-2 flex items-center justify-center min-h-[44px] min-w-[44px]"
-            style={{ border: '1px solid var(--color-ink)' }}
+            className="p-2 flex items-center justify-center rounded-lg transition-all"
+            style={{ border: '1px solid var(--color-border)', color: 'var(--color-muted)' }}
             aria-label="Close menu"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         )}
       </div>
 
-      {/* ── Compose Action Button ──────────────────────────────────────────────── */}
-      <div className={`${isMobile ? 'py-2 mb-2' : 'px-4 py-3'}`}>
+      {/* ── Compose Button ──────────────────────────────────────────────── */}
+      <div className={`${isMobile ? 'py-2 mb-2' : 'px-4 pb-4'}`}>
         <button
           onClick={() => {
             openCompose();
             handleLinkClick();
           }}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-black uppercase tracking-wider min-h-[44px] transition-all"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] font-semibold rounded-[10px] transition-all"
           style={{
-            backgroundColor: 'var(--color-accent)',
-            border: '1px solid var(--color-ink)',
-            color: 'var(--color-ink)',
-            boxShadow: '3px 3px 0 var(--color-ink)',
-            fontFamily: 'var(--font-body)',
+            backgroundColor: 'var(--color-primary)',
+            color: '#fff',
+            boxShadow: '0 4px 14px rgba(93,107,47,.25)',
           }}
           onMouseEnter={e => {
-            (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-            (e.currentTarget as HTMLElement).style.transform = 'translate(3px,3px)';
+            (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(93,107,47,.35)';
+            (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
           }}
           onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.boxShadow = '3px 3px 0 var(--color-ink)';
+            (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 14px rgba(93,107,47,.25)';
             (e.currentTarget as HTMLElement).style.transform = '';
           }}
         >
-          <Plus size={16} />
-          <span>Compose Action</span>
+          <Plus size={15} />
+          <span>Compose</span>
         </button>
       </div>
 
-      {/* ── Navigation Links ─────────────────────────────────────────────────── */}
-      <nav className={`flex-1 space-y-1.5 overflow-y-auto text-left ${isMobile ? '' : 'px-3'}`}>
+      {/* ── Navigation Links ────────────────────────────────────────────── */}
+      <nav className={`flex-1 overflow-y-auto text-left ${isMobile ? '' : 'px-3'}`}>
         <div
-          className="text-[9px] font-black uppercase tracking-widest px-4 mb-2 pt-1"
-          style={{ color: '#888', fontFamily: 'var(--font-body)' }}
+          className="text-[10px] font-semibold uppercase tracking-widest px-3 mb-2"
+          style={{ color: 'var(--color-muted)' }}
         >
           Workspace
         </div>
-        {navigationItems.map((item) => {
-          const active = isItemActive(item.path);
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={handleLinkClick}
-              className="w-full flex items-center justify-between px-4 py-2.5 transition-all duration-100 font-bold text-xs min-h-[44px]"
-              style={{
-                backgroundColor: active ? 'var(--color-accent)' : 'transparent',
-                color: 'var(--color-ink)',
-                border: `1px solid ${active ? 'var(--color-ink)' : 'transparent'}`,
-                boxShadow: active ? '3px 3px 0 var(--color-ink)' : 'none',
-                fontFamily: 'var(--font-body)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.04em',
-                marginBottom: '2px',
-              }}
-              onMouseEnter={e => {
-                if (!active) {
-                  (e.currentTarget as HTMLElement).style.backgroundColor = '#f7f6f0';
-                  (e.currentTarget as HTMLElement).style.border = '1px solid var(--color-ink)';
-                }
-              }}
-              onMouseLeave={e => {
-                if (!active) {
-                  (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                  (e.currentTarget as HTMLElement).style.border = '1px solid transparent';
-                }
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <span>{item.icon}</span>
-                <span>{item.label}</span>
-              </div>
-              {item.count !== undefined && item.count > 0 && (
-                <span
-                  className="text-[9px] px-2 py-0.5 font-black border"
-                  style={{
-                    backgroundColor: active ? 'var(--color-ink)' : '#f3f1e9',
-                    color: active ? '#FFFFFF' : 'var(--color-ink)',
-                    borderColor: 'var(--color-ink)',
-                  }}
-                >
-                  {item.count}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+        <div className="space-y-0.5">
+          {navigationItems.map((item) => {
+            const active = isItemActive(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={handleLinkClick}
+                className="w-full flex items-center justify-between px-3 py-2.5 rounded-[10px] transition-all duration-150 text-[13px] font-medium"
+                style={{
+                  backgroundColor: active ? 'rgba(93,107,47,.10)' : 'transparent',
+                  color: active ? 'var(--color-primary)' : 'var(--color-muted)',
+                  fontFamily: 'var(--font-body)',
+                }}
+                onMouseEnter={e => {
+                  if (!active) {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(93,107,47,.05)';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--color-ink)';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!active) {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                    (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)';
+                  }
+                }}
+              >
+                <div className="flex items-center gap-2.5">
+                  <span style={{ opacity: active ? 1 : 0.7 }}>{item.icon}</span>
+                  <span>{item.label}</span>
+                </div>
+                {item.count !== undefined && item.count > 0 && (
+                  <span
+                    className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                    style={{
+                      backgroundColor: active ? 'var(--color-primary)' : 'rgba(93,107,47,.12)',
+                      color: active ? '#fff' : 'var(--color-primary)',
+                    }}
+                  >
+                    {item.count}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
       </nav>
 
-      {/* ── System Status Card ────────────────────────────────────────────────── */}
+      {/* ── System Status Card ─────────────────────────────────────────── */}
       <div className={`${isMobile ? 'pt-3 mt-3' : 'p-4'}`}>
         <div
-          className="p-3.5 text-left"
+          className="p-4 rounded-[16px] text-left"
           style={{
-            backgroundColor: 'var(--color-surface)',
-            border: '1px solid var(--color-ink)',
-            boxShadow: '3px 3px 0 var(--color-ink)',
+            backgroundColor: 'rgba(93,107,47,.05)',
+            border: '1px solid rgba(93,107,47,.12)',
           }}
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <span className="relative flex h-2.5 w-2.5">
+              <span className="relative flex h-2 w-2">
                 <span
-                  className="animate-ping absolute inline-flex h-full w-full opacity-75"
+                  className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-60"
                   style={{ backgroundColor: 'var(--color-success)' }}
                 />
                 <span
-                  className="relative inline-flex h-2.5 w-2.5"
+                  className="relative inline-flex h-2 w-2 rounded-full"
                   style={{ backgroundColor: 'var(--color-success)' }}
                 />
               </span>
               <span
-                className="text-[10px] font-black uppercase tracking-wider"
-                style={{ fontFamily: 'var(--font-body)', color: 'var(--color-ink)' }}
+                className="text-[11px] font-semibold"
+                style={{ color: 'var(--color-ink)' }}
               >
                 AI Agent Active
               </span>
             </div>
-            <Activity size={11} style={{ color: 'var(--color-accent-cta)' }} />
+            <Activity size={11} style={{ color: 'var(--color-primary)' }} />
           </div>
-
           <p
-            className="text-[10px] font-bold leading-normal mb-2.5"
-            style={{ color: '#666', fontFamily: 'var(--font-body)' }}
+            className="text-[11px] leading-relaxed mb-3"
+            style={{ color: 'var(--color-muted)' }}
           >
-            Analyzing incoming streams automatically. Gmail linked.
+            Analyzing incoming streams. Gmail linked.
           </p>
-
           <div
-            className="flex items-center justify-between text-[9px] font-mono pt-2"
+            className="flex items-center justify-between text-[10px] pt-2.5"
             style={{
-              borderTop: '1px solid var(--color-ink)',
+              borderTop: '1px solid rgba(93,107,47,.12)',
+              color: 'var(--color-muted)',
               fontFamily: 'var(--font-mono)',
-              color: '#888',
             }}
           >
-            <span>Provider: OpenAI</span>
-            <span>v1.0.0</span>
+            <span>OpenAI</span>
+            <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>v1.0.0</span>
           </div>
         </div>
       </div>
