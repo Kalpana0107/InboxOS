@@ -1,0 +1,11 @@
+title = "InboxOS Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known development placeholders retained in repository history"
+regexTarget = "secret"
+regexes = [
+  '''^(postgres|inboxos_dev|your_secure_password_16_chars|replace_with_random_64_char_hex_string_for_dev_mode_only)$''',
+]
