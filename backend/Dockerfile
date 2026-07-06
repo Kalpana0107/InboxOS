@@ -1,15 +1,15 @@
-# ─── Stage 1: Builder ────────────────────────────────────────────────────────
+# ─── Stage 1: Development Environment / Builder ────────────────────────────────
 FROM node:20-alpine AS builder
 
 RUN apk add --no-cache openssl libc6-compat
 
-WORKDIR /build
+WORKDIR /usr/src/app
 
 # Install dependencies (leverage layer cache)
 COPY package*.json ./
 RUN npm install --ignore-scripts
 
-# Copy source files and compile TypeScript
+# Copy source files
 COPY tsconfig.json ./
 COPY prisma ./prisma/
 COPY src ./src/
@@ -17,10 +17,17 @@ COPY src ./src/
 # Generate Prisma client
 RUN npx prisma generate
 
-# Compile TypeScript to JavaScript
+# ─── Stage 2: Development Stage ──────────────────────────────────────────────
+FROM builder AS dev
+
+EXPOSE 8000
+CMD ["npm", "run", "dev"]
+
+# ─── Stage 3: Production Compile Stage ─────────────────────────────────────────
+FROM builder AS compiler
 RUN npm run build
 
-# ─── Stage 2: Production Runtime ─────────────────────────────────────────────
+# ─── Stage 4: Production Runtime ─────────────────────────────────────────────
 FROM node:20-alpine AS runner
 
 RUN apk add --no-cache openssl libc6-compat
@@ -31,11 +38,11 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm install --omit=dev --ignore-scripts
 
-# Copy compiled output and Prisma artifacts from builder
-COPY --from=builder /build/dist ./dist
-COPY --from=builder /build/prisma ./prisma
-COPY --from=builder /build/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /build/node_modules/@prisma ./node_modules/@prisma
+# Copy compiled output and Prisma artifacts from compiler
+COPY --from=compiler /usr/src/app/dist ./dist
+COPY --from=compiler /usr/src/app/prisma ./prisma
+COPY --from=compiler /usr/src/app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=compiler /usr/src/app/node_modules/@prisma ./node_modules/@prisma
 
 # Set proper ownership to non-root node user
 RUN chown -R node:node /usr/src/app

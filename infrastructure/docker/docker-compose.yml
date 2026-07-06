@@ -43,6 +43,7 @@ services:
     build:
       context: ../../backend
       dockerfile: Dockerfile
+      target: dev
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -69,8 +70,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    # Start backend server using compiled JS
-    command: npm run start:prod
+    # Start backend server using dev mode for hot reloading
+    command: npm run dev
 
   # ==========================================
   # React Frontend Service
