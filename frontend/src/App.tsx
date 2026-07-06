@@ -180,7 +180,9 @@ const DashboardContent: React.FC = () => {
   const [openaiKey, setOpenaiKey] = useState('sk-proj-••••••••••••••••••••');
   const [geminiKey, setGeminiKey] = useState('');
   const [ollamaUrl, setOllamaUrl] = useState('http://localhost:11434');
-  const [gmailConnected, setGmailConnected] = useState(true);
+  const [gmailConnected, setGmailConnected] = useState(false);
+  const [gmailEmail, setGmailEmail] = useState<string | null>(null);
+  const [gmailSyncing, setGmailSyncing] = useState(false);
   const [outlookConnected, setOutlookConnected] = useState(false);
   const [telegramConnected, setTelegramConnected] = useState(true);
   const [telegramToken, setTelegramToken] = useState('6978452144:AAH_••••••••');
@@ -293,15 +295,77 @@ const DashboardContent: React.FC = () => {
     }
   };
 
+  // Load Gmail connection status from backend
   useEffect(() => {
-    if (activeTab === 'settings') {
-      const searchParams = new URLSearchParams(location.search);
-      const tab = searchParams.get('tab');
-      if (tab && ['profile', 'ai', 'integrations', 'notifications', 'digests'].includes(tab)) {
-        setSettingsSubTab(tab);
+    if (activeTab !== 'settings') return;
+    const fetchGmailStatus = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/integrations/gmail/status`, {
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setGmailConnected(data.connected ?? false);
+          setGmailEmail(data.emailAddress ?? null);
+        }
+      } catch (err) {
+        console.warn('[Gmail] Could not fetch status:', err);
       }
+    };
+    fetchGmailStatus();
+  }, [activeTab]);
+
+  const handleConnectGmail = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/integrations/gmail/auth`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.url) window.location.href = data.url;
+      }
+    } catch (err) {
+      alert('Failed to start Gmail OAuth. Make sure the backend is running.');
     }
-  }, [location.search, activeTab]);
+  };
+
+  const handleDisconnectGmail = async () => {
+    if (!confirm('Disconnect your Gmail account?')) return;
+    try {
+      await fetch(`${API_BASE}/api/integrations/gmail`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      setGmailConnected(false);
+      setGmailEmail(null);
+    } catch (err) {
+      alert('Failed to disconnect Gmail.');
+    }
+  };
+
+  const handleSyncGmail = async () => {
+    setGmailSyncing(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/integrations/gmail/sync`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setToastMessage(`Synced ${data.synced} new email(s) from Gmail`);
+        setTimeout(() => setToastMessage(null), 4000);
+        refetchStats();
+      } else {
+        const err = await res.json();
+        alert(err.error || 'Sync failed');
+      }
+    } catch (err) {
+      alert('Gmail sync failed. Is the backend running?');
+    } finally {
+      setGmailSyncing(false);
+    }
+  };
+
 
   // Load preferences from backend settings API
   useEffect(() => {
@@ -789,22 +853,37 @@ const DashboardContent: React.FC = () => {
                           <p className="text-xs font-semibold text-black font-black">
                             Gmail Account
                           </p>
-                          <p className="text-[10px] text-emerald-400 flex items-center gap-1 font-medium">
-                            <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse" />{' '}
-                            Connected
-                          </p>
+                          {gmailConnected ? (
+                            <p className="text-[10px] text-emerald-400 flex items-center gap-1 font-medium">
+                              <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                              {gmailEmail ?? 'Connected'}
+                            </p>
+                          ) : (
+                            <p className="text-[10px] text-gray-500 font-medium">Not Connected</p>
+                          )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => setGmailConnected(!gmailConnected)}
-                        className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all uppercase tracking-wider ${
-                          gmailConnected
-                            ? 'bg-white border border-black hover:bg-white border border-black shadow-[2px_2px_0_0_#111] text-gray-800 font-bold border-black'
-                            : 'bg-indigo-600 hover:bg-indigo-500 text-black font-black border-transparent'
-                        }`}
-                      >
-                        {gmailConnected ? 'Disconnect' : 'Connect'}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {gmailConnected && (
+                          <button
+                            onClick={handleSyncGmail}
+                            disabled={gmailSyncing}
+                            className="px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white border-transparent disabled:opacity-50"
+                          >
+                            {gmailSyncing ? 'Syncing...' : 'Sync Inbox'}
+                          </button>
+                        )}
+                        <button
+                          onClick={gmailConnected ? handleDisconnectGmail : handleConnectGmail}
+                          className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all uppercase tracking-wider ${
+                            gmailConnected
+                              ? 'bg-white border border-black hover:bg-gray-50 shadow-[2px_2px_0_0_#111] text-gray-800'
+                              : 'bg-indigo-600 hover:bg-indigo-500 text-white border-transparent'
+                          }`}
+                        >
+                          {gmailConnected ? 'Disconnect' : 'Connect Gmail'}
+                        </button>
+                      </div>
                     </div>
 
                     {/* Outlook */}

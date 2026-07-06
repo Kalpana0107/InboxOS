@@ -33,16 +33,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const clearError = () => setError(null);
 
-  // Check login session on mount
+  // Check login session on mount (cookie-based — no localStorage fallback)
   useEffect(() => {
     const checkSession = async () => {
       try {
         const response = await fetch(`${API_BASE}/api/auth/me`, {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          // Include cookies for cross-origin requests
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
         });
 
@@ -54,21 +51,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
               email: data.user.email,
             });
           }
-        } else {
-          // If backend fails or returns unauthorized, check localStorage fallback for demo/testing
-          const localUser = localStorage.getItem('inboxos_user');
-          if (localUser) {
-            setUser(JSON.parse(localUser));
-          }
         }
+        // If not ok (401), user is simply not logged in — no fallback needed
       } catch (err) {
-        console.warn(
-          '[AuthContext] Backend server unreachable. Falling back to local session checking.'
-        );
-        const localUser = localStorage.getItem('inboxos_user');
-        if (localUser) {
-          setUser(JSON.parse(localUser));
-        }
+        // Backend unreachable — user is not authenticated
+        console.warn('[AuthContext] Could not reach backend to verify session.');
       } finally {
         setIsLoading(false);
       }
@@ -84,9 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
         credentials: 'include',
       });
@@ -97,34 +82,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       const data = await response.json();
-      const authenticatedUser = {
+      setUser({
         id: data.user.id,
         email: data.user.email,
-      };
-
-      setUser(authenticatedUser);
-      localStorage.setItem('inboxos_user', JSON.stringify(authenticatedUser));
+      });
     } catch (err: any) {
-      console.warn(
-        '[AuthContext] API Login failed, attempting offline demo fallback...',
-        err.message
-      );
-
-      // Offline fallback: if backend is down, allow any email with password length >= 6 for testing/demo
-      if (password.length >= 6) {
-        const mockUser = {
-          id: `demo-${Math.random().toString(36).substring(2, 9)}`,
-          email: email,
-        };
-        setUser(mockUser);
-        localStorage.setItem('inboxos_user', JSON.stringify(mockUser));
-      } else {
-        setError(
-          err.message ||
-            'Network error, and password must be at least 6 characters for demo bypass.'
-        );
-        throw err;
-      }
+      setError(err.message || 'Login failed. Please check your credentials.');
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -137,9 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
         credentials: 'include',
       });
@@ -150,35 +112,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       const data = await response.json();
-
-      // Auto login user after registration
-      const authenticatedUser = {
+      // Auto-login after registration (backend sets JWT cookie)
+      setUser({
         id: data.user.id,
         email: data.user.email,
-      };
-
-      setUser(authenticatedUser);
-      localStorage.setItem('inboxos_user', JSON.stringify(authenticatedUser));
+      });
     } catch (err: any) {
-      console.warn(
-        '[AuthContext] API Register failed, attempting offline demo fallback...',
-        err.message
-      );
-
-      if (password.length >= 6) {
-        const mockUser = {
-          id: `demo-${Math.random().toString(36).substring(2, 9)}`,
-          email: email,
-        };
-        setUser(mockUser);
-        localStorage.setItem('inboxos_user', JSON.stringify(mockUser));
-      } else {
-        setError(
-          err.message ||
-            'Network error, and password must be at least 6 characters for demo bypass.'
-        );
-        throw err;
-      }
+      setError(err.message || 'Registration failed. Please try again.');
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -228,12 +169,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         credentials: 'include',
       });
     } catch (err) {
-      console.warn(
-        '[AuthContext] Failed to call logout endpoint on backend. Logging out locally.'
-      );
+      console.warn('[AuthContext] Failed to call logout endpoint on backend.');
     } finally {
       setUser(null);
-      localStorage.removeItem('inboxos_user');
       setIsLoading(false);
     }
   };

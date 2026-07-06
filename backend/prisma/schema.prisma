@@ -72,7 +72,9 @@ model Email {
   thread         Thread                       @relation(fields: [threadId], references: [id], onDelete: Cascade)
   actionItems    ActionItem[]
   reminders      Reminder[]
-  embedding      Unsupported("vector(1536)")?
+  // embedding field requires pgvector extension — enable in Supabase Dashboard → Database → Extensions → vector
+  // embedding      Unsupported("vector(1536)")?
+
   analysis       EmailAnalysis?
   calendarEvents CalendarEvent[]
   digestId       String?

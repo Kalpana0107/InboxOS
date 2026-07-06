@@ -18,12 +18,34 @@ import { RedisService } from './services/redis.service';
 import { google } from 'googleapis';
 import crypto from 'crypto';
 import { EmailSenderService } from './services/email-sender.service';
-import { encrypt } from './utils/crypto';
+import { encrypt, decrypt } from './utils/crypto';
 import { registerWorkerHandlers } from './worker';
 import { Server as SocketIoServer } from 'socket.io';
 import { WebSocketService } from './services/websocket.service';
+// Firebase Admin — modular v14 imports
+import { initializeApp as firebaseInitializeApp, getApps, cert } from 'firebase-admin/app';
+import { getAuth as firebaseGetAuth } from 'firebase-admin/auth';
 
 import { setupSwagger } from './config/swagger';
+
+// ── Firebase Admin SDK Initialization ────────────────────────────────────────
+// Only initialize once; guard against hot-reload double-init in dev mode.
+if (!getApps().length) {
+  try {
+    firebaseInitializeApp({
+      credential: cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        // .env stores literal \n — Node needs real newlines
+        privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+      }),
+    });
+    logger.info('Firebase Admin SDK initialized');
+  } catch (err: any) {
+    logger.warn('Firebase Admin SDK init failed (Google Sign-In will be unavailable):', err.message);
+  }
+}
+
 
 const app = express();
 const prisma = new PrismaClient();
@@ -381,6 +403,58 @@ app.get('/api/auth/me', requireAuth, (req: AuthenticatedRequest, res: Response) 
   return res.status(200).json({
     user: req.user,
   });
+});
+
+/**
+ * POST /api/auth/firebase
+ * Verifies a Firebase ID token (from Google Sign-In popup on the frontend)
+ * and returns a JWT session cookie. Creates the user in DB if first time.
+ */
+app.post('/api/auth/firebase', async (req: Request, res: Response) => {
+  const { idToken } = req.body;
+  if (!idToken) {
+    return res.status(400).json({ error: 'idToken is required' });
+  }
+
+  if (!getApps().length) {
+    return res.status(503).json({ error: 'Firebase Admin not configured on server' });
+  }
+
+  try {
+    const decoded = await firebaseGetAuth().verifyIdToken(idToken);
+    const email = decoded.email;
+    if (!email) {
+      return res.status(400).json({ error: 'Firebase token has no email' });
+    }
+
+    // Find or create user
+    let user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email,
+          // Random unusable password — Firebase is the auth provider
+          passwordHash: crypto.randomBytes(32).toString('hex'),
+        },
+      });
+    }
+
+    const token = AuthService.generateToken(user.id, user.email);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    });
+
+    return res.status(200).json({
+      message: 'Authenticated via Firebase',
+      user: { id: user.id, email: user.email },
+    });
+  } catch (err: any) {
+    logger.error('Firebase auth error:', { error: err.message });
+    return res.status(401).json({ error: 'Invalid or expired Firebase token' });
+  }
 });
 
 /**
@@ -880,7 +954,7 @@ app.get('/api/integrations/gmail/callback', async (req: Request, res: Response) 
         create: { userId: user.id, provider: 'gmail', emailAddress, encryptedTokens, syncState: 'connected' }
       });
 
-      return res.redirect('http://localhost:5173/');
+      return res.redirect('http://localhost:5173/dashboard');
     }
 
     // ── Connect Gmail to existing account flow ────────────────────────────────
@@ -914,8 +988,193 @@ app.get('/api/integrations/gmail/callback', async (req: Request, res: Response) 
     console.error('OAuth callback error:', error);
     return res.status(500).json({ error: 'OAuth integration failed' });
   }
-
 });
+
+/**
+ * GET /api/integrations/gmail/status
+ * Returns whether the authenticated user has a connected Gmail account.
+ */
+app.get('/api/integrations/gmail/status', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const account = await prisma.emailAccount.findFirst({
+      where: { userId, provider: 'gmail' },
+      select: { emailAddress: true, syncState: true, lastSyncAt: true },
+    });
+
+    if (!account) {
+      return res.json({ connected: false });
+    }
+
+    return res.json({
+      connected: true,
+      emailAddress: account.emailAddress,
+      syncState: account.syncState,
+      lastSyncAt: account.lastSyncAt,
+    });
+  } catch (error) {
+    console.error('Gmail status error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * POST /api/integrations/gmail/sync
+ * Fetches the latest 50 unread Gmail messages for the authenticated user
+ * and stores them in the Email table.
+ */
+app.post('/api/integrations/gmail/sync', requireAuth, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const account = await prisma.emailAccount.findFirst({
+      where: { userId, provider: 'gmail' },
+    });
+
+    if (!account) {
+      return res.status(400).json({ error: 'No Gmail account connected. Please connect Gmail first.' });
+    }
+
+    // Decrypt stored tokens
+    let tokens: any;
+    try {
+      tokens = JSON.parse(decrypt(account.encryptedTokens));
+    } catch (e) {
+      return res.status(400).json({ error: 'Failed to decrypt Gmail tokens. Please reconnect Gmail.' });
+    }
+
+    // Build authenticated Gmail client with stored tokens
+    const userOAuth = new google.auth.OAuth2(
+      process.env.GMAIL_CLIENT_ID,
+      process.env.GMAIL_CLIENT_SECRET,
+      process.env.GMAIL_REDIRECT_URI
+    );
+    userOAuth.setCredentials(tokens);
+
+    // Auto-refresh token if expired
+    userOAuth.on('tokens', async (newTokens) => {
+      const merged = { ...tokens, ...newTokens };
+      const encrypted = encrypt(JSON.stringify(merged));
+      await prisma.emailAccount.update({
+        where: { id: account.id },
+        data: { encryptedTokens: encrypted },
+      });
+    });
+
+    const gmail = google.gmail({ version: 'v1', auth: userOAuth });
+
+    // Fetch list of latest 50 messages
+    const listRes = await gmail.users.messages.list({
+      userId: 'me',
+      maxResults: 50,
+      q: 'in:inbox',
+    });
+
+    const messages = listRes.data.messages || [];
+    if (messages.length === 0) {
+      await prisma.emailAccount.update({
+        where: { id: account.id },
+        data: { lastSyncAt: new Date() },
+      });
+      return res.json({ synced: 0, message: 'No messages found in inbox.' });
+    }
+
+    let syncedCount = 0;
+
+    for (const msg of messages) {
+      if (!msg.id) continue;
+
+      // Skip if already stored
+      const existing = await prisma.email.findUnique({ where: { messageId: msg.id } });
+      if (existing) continue;
+
+      try {
+        const fullMsg = await gmail.users.messages.get({
+          userId: 'me',
+          id: msg.id,
+          format: 'full',
+        });
+
+        const headers = fullMsg.data.payload?.headers || [];
+        const getHeader = (name: string) =>
+          headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value || '';
+
+        const subject = getHeader('Subject') || '(no subject)';
+        const from = getHeader('From') || 'unknown@unknown.com';
+        const to = getHeader('To') || account.emailAddress;
+        const messageId = getHeader('Message-ID') || msg.id;
+        const inReplyTo = getHeader('In-Reply-To') || null;
+
+        // Extract plain text body
+        let body = '';
+        const extractBody = (part: any): string => {
+          if (part.mimeType === 'text/plain' && part.body?.data) {
+            return Buffer.from(part.body.data, 'base64').toString('utf-8');
+          }
+          if (part.parts) {
+            for (const p of part.parts) {
+              const text = extractBody(p);
+              if (text) return text;
+            }
+          }
+          return '';
+        };
+
+        if (fullMsg.data.payload) {
+          body = extractBody(fullMsg.data.payload);
+        }
+        if (!body && fullMsg.data.snippet) {
+          body = fullMsg.data.snippet;
+        }
+
+        // Find or create thread
+        let threadId: string | null = null;
+        if (inReplyTo) {
+          const prev = await prisma.email.findUnique({ where: { messageId: inReplyTo } });
+          if (prev) threadId = prev.threadId;
+        }
+        if (!threadId) {
+          const newThread = await prisma.thread.create({
+            data: { summary: `Thread: ${subject}` },
+          });
+          threadId = newThread.id;
+        }
+
+        await prisma.email.create({
+          data: {
+            messageId,
+            inReplyTo,
+            sender: from,
+            recipient: to,
+            subject,
+            body,
+            status: 'UNREAD',
+            userId,
+            threadId,
+          },
+        });
+        syncedCount++;
+      } catch (msgErr: any) {
+        console.warn(`Failed to sync message ${msg.id}:`, msgErr.message);
+      }
+    }
+
+    // Update last sync time
+    await prisma.emailAccount.update({
+      where: { id: account.id },
+      data: { lastSyncAt: new Date() },
+    });
+
+    return res.json({ synced: syncedCount, total: messages.length });
+  } catch (error: any) {
+    console.error('Gmail sync error:', error.message);
+    return res.status(500).json({ error: 'Gmail sync failed. ' + error.message });
+  }
+});
+
 
 /**
  * POST /api/emails/send
