@@ -87,8 +87,8 @@ const DashboardContent: React.FC = () => {
 
   // Settings/Preferences states
   const [settingsSubTab, setSettingsSubTab] = useState('profile');
-  const [profileName, setProfileName] = useState('Alex Chen');
-  const [profileEmail, setProfileEmail] = useState('demo@inboxos.app');
+  const [profileName, setProfileName] = useState('');
+  const [profileEmail, setProfileEmail] = useState('');
   const [aiProvider, setAiProvider] = useState('openai');
   const [openaiKey, setOpenaiKey] = useState('sk-proj-••••••••••••••••••••');
   const [geminiKey, setGeminiKey] = useState('');
@@ -301,6 +301,8 @@ const DashboardContent: React.FC = () => {
           setAutoReply(!!data.autoReply);
           setTimezone(data.timezone || 'UTC');
           setDigestSchedule(data.digestSchedule || 'daily');
+          setProfileName(data.username || '');
+          setProfileEmail(data.email || '');
         }
       } catch (err) {
         console.error('Failed to load user settings:', err);
@@ -423,6 +425,7 @@ const DashboardContent: React.FC = () => {
           autoReply,
           timezone,
           digestSchedule,
+          username: profileName || undefined,
         }),
         credentials: 'include',
       });
@@ -524,14 +527,14 @@ const DashboardContent: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-gray-700 font-bold uppercase tracking-wider block">
-                        Full Name
+                        Username
                       </label>
                       <input
                         type="text"
                         value={profileName}
                         onChange={(e) => setProfileName(e.target.value)}
                         className="neu-input w-full px-4 py-2.5 text-xs transition-all"
-                        placeholder="Alex Chen"
+                        placeholder="e.g. alexchen"
                         required
                       />
                     </div>
@@ -542,8 +545,8 @@ const DashboardContent: React.FC = () => {
                       <input
                         type="email"
                         value={profileEmail}
-                        onChange={(e) => setProfileEmail(e.target.value)}
-                        className="neu-input w-full px-4 py-2.5 text-xs transition-all"
+                        disabled
+                        className="neu-input w-full px-4 py-2.5 text-xs bg-gray-50 text-gray-400 cursor-not-allowed transition-all"
                         placeholder="alex@inboxos.app"
                         required
                       />

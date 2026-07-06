@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export interface User {
   id: string;
   email: string;
+  username?: string;
 }
 
 interface AuthContextType {
@@ -12,6 +13,9 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   loginWithFirebase: (idToken: string) => Promise<void>;
+  checkGoogleRegistration: (idToken: string) => Promise<{ isRegistered: boolean; username?: string; email?: string }>;
+  registerWithGoogle: (idToken: string, username: string, password: string) => Promise<void>;
+  loginWithGoogle: (idToken: string, username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   error: string | null;
   clearError: () => void;
@@ -49,6 +53,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setUser({
               id: data.user.userId,
               email: data.user.email,
+              username: data.user.username || undefined,
             });
           }
         }
@@ -161,6 +166,86 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const checkGoogleRegistration = async (idToken: string) => {
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/google/check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Check failed');
+      }
+      return await response.json();
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
+  const registerWithGoogle = async (idToken: string, username: string, password: string) => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/google/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken, username, password }),
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Google registration failed');
+      }
+      const data = await response.json();
+      const authenticatedUser = {
+        id: data.user.id,
+        email: data.user.email,
+        username: data.user.username,
+      };
+      setUser(authenticatedUser);
+      localStorage.setItem('inboxos_user', JSON.stringify(authenticatedUser));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithGoogle = async (idToken: string, username: string, password: string) => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/google/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken, username, password }),
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Google login failed');
+      }
+      const data = await response.json();
+      const authenticatedUser = {
+        id: data.user.id,
+        email: data.user.email,
+        username: data.user.username,
+      };
+      setUser(authenticatedUser);
+      localStorage.setItem('inboxos_user', JSON.stringify(authenticatedUser));
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -185,6 +270,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         login,
         register,
         loginWithFirebase,
+        checkGoogleRegistration,
+        registerWithGoogle,
+        loginWithGoogle,
         logout,
         error,
         clearError,

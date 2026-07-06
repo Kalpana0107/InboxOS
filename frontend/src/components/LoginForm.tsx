@@ -6,13 +6,13 @@ import { auth, googleProvider, isFirebaseConfigured } from '../firebase';
 import { signInWithPopup } from 'firebase/auth';
 import {
   Sparkles,
-  Mail,
   Lock,
   AlertCircle,
   Eye,
   EyeOff,
   Loader2,
   ArrowRight,
+  User,
 } from 'lucide-react';
 
 const GoogleIcon = () => (
@@ -41,58 +41,90 @@ const GoogleIcon = () => (
 );
 
 export const LoginForm: React.FC = () => {
-  const { login, loginWithFirebase, error: authError, clearError } = useAuth();
+  const { loginWithGoogle, checkGoogleRegistration, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState('');
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [idToken, setIdToken] = useState('');
+
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
-  const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [isCapsLockOn, setIsCapsLockOn] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const caps = e.getModifierState('CapsLock');
-    setIsCapsLockOn(caps);
+    setIsCapsLockOn(e.getModifierState('CapsLock'));
+  };
+
+  const handleConnectGoogle = async () => {
+    setLocalError(null);
+    clearError();
+
+    if (!isFirebaseConfigured) {
+      setGoogleLoading(true);
+      setTimeout(() => {
+        setGoogleLoading(false);
+        setGoogleConnected(true);
+        setGoogleEmail('demo-google@inboxos.dev');
+        setIdToken('mock-id-token');
+        setUsername('demo-user');
+      }, 800);
+      return;
+    }
+
+    setGoogleLoading(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const tokenVal = await result.user.getIdToken();
+      
+      // Check if user is registered
+      const check = await checkGoogleRegistration(tokenVal);
+      if (!check.isRegistered) {
+        setLocalError('You have not been registered here. Please register your account first.');
+        return;
+      }
+
+      setGoogleConnected(true);
+      setGoogleEmail(check.email || result.user.email || '');
+      setIdToken(tokenVal);
+      setUsername(check.username || '');
+    } catch (err: any) {
+      console.error('Google login popup error:', err);
+      setLocalError(err.message || 'Google verification failed.');
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const validate = () => {
     let isValid = true;
-    if (!email) {
-      setEmailError('Email is required');
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      setEmailError('Please enter a valid email address');
-      isValid = false;
-    } else {
-      setEmailError(null);
-    }
-
     if (!password) {
       setPasswordError('Password is required');
-      isValid = false;
-    } else if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
       isValid = false;
     } else {
       setPasswordError(null);
     }
-
     return isValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalError(null);
     clearError();
     if (!validate()) return;
     setIsLoading(true);
     try {
-      await login(email, password);
+      await loginWithGoogle(idToken, username, password);
       navigate('/dashboard');
-    } catch (err) {
-      console.error('Login error:', err);
+    } catch (err: any) {
+      console.error('Login submit error:', err);
+      setLocalError(err.message || 'Login failed.');
     } finally {
       setIsLoading(false);
     }
@@ -111,165 +143,151 @@ export const LoginForm: React.FC = () => {
           </p>
         </div>
 
-        {/* Google Authentication (Redesigned White Button) */}
-        <button
-          type="button"
-          onClick={async () => {
-            if (!isFirebaseConfigured) {
-              setIsLoading(true);
-              setTimeout(() => {
-                setIsLoading(false);
-                login('demo@inboxos.dev', 'password123').then(() =>
-                  navigate('/dashboard')
-                );
-              }, 1000);
-              return;
-            }
-            setIsLoading(true);
-            try {
-              const result = await signInWithPopup(auth, googleProvider);
-              const idToken = await result.user.getIdToken();
-              await loginWithFirebase(idToken);
-              navigate('/dashboard');
-            } catch (err: any) {
-              console.error('Google sign-in error:', err);
-            } finally {
-              setIsLoading(false);
-            }
-          }}
-          className="w-full h-[54px] flex items-center justify-center gap-3 bg-white border border-[#EAE5DA] rounded-[16px] text-[#1D1D1D] text-[15px] font-semibold transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] hover:bg-[#FAF7F2]"
-        >
-          <GoogleIcon />
-          <span>Continue with Google</span>
-        </button>
-
-        {/* Divider */}
-        <div className="flex items-center gap-4 py-2">
-          <div className="flex-grow border-t border-[#EAE5DA]" />
-          <span className="text-[11px] font-bold uppercase tracking-widest text-[#9CA3AF]">
-            OR
-          </span>
-          <div className="flex-grow border-t border-[#EAE5DA]" />
-        </div>
-
-        {/* Auth Error Alert */}
-        {authError && (
+        {/* Auth Errors */}
+        {(authError || localError) && (
           <div className="flex items-center gap-3 p-4 bg-[#FFF0F0] border border-[#FCA5A5] rounded-[14px] text-[#EF4444] text-xs">
             <AlertCircle size={16} className="shrink-0 text-[#EF4444]" />
-            <p className="leading-snug font-medium">{authError}</p>
+            <div className="leading-snug font-medium">
+              <p>{localError || authError}</p>
+              {!googleConnected && localError?.includes('not been registered') && (
+                <Link to="/register" className="underline mt-1.5 block font-bold text-[#b91c1c]">
+                  Go to Sign Up Page ➔
+                </Link>
+              )}
+            </div>
           </div>
         )}
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Email */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[#374151] tracking-wide block">
-              Email Address
-            </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]">
-                <Mail size={16} strokeWidth={1.5} />
-              </span>
-              <input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (emailError) setEmailError(null);
-                }}
-                disabled={isLoading}
-                className={`w-full h-[54px] pl-11 pr-4 text-[15px] bg-[#FCFCFE] border rounded-[14px] text-[#1D1D1D] placeholder-[#9CA3AF] outline-none transition-all duration-200 ${
-                  emailError
-                    ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-4 focus:ring-[#EF4444]/10'
-                    : 'border-[#EAE5DA] focus:border-[#5F6B38] focus:ring-4 focus:ring-[#5F6B38]/10'
-                }`}
-              />
-            </div>
-            {emailError && (
-              <p className="text-[11px] flex items-center gap-1.5 mt-1 font-semibold text-[#EF4444] pl-1">
-                <AlertCircle size={11} />
-                <span>{emailError}</span>
-              </p>
-            )}
+        {!googleConnected ? (
+          <div className="space-y-4">
+            <p className="text-[14px] text-[#6B7280]">
+              To sign in, first connect your registered Google account:
+            </p>
+            <button
+              type="button"
+              disabled={googleLoading}
+              onClick={handleConnectGoogle}
+              className="w-full h-[54px] flex items-center justify-center gap-3 bg-white border border-[#EAE5DA] rounded-[16px] text-[#1D1D1D] text-[15px] font-semibold transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98] hover:bg-[#FAF7F2] disabled:opacity-50"
+            >
+              {googleLoading ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  <span>Connecting...</span>
+                </>
+              ) : (
+                <>
+                  <GoogleIcon />
+                  <span>Connect Google Account</span>
+                </>
+              )}
+            </button>
           </div>
-
-          {/* Password */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center">
-              <label className="text-xs font-semibold text-[#374151] tracking-wide block">
-                Password
-              </label>
-              <a
-                href="#"
-                className="text-xs font-semibold text-[#5F6B38] hover:underline"
-              >
-                Forgot Password?
-              </a>
-            </div>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]">
-                <Lock size={16} strokeWidth={1.5} />
-              </span>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                value={password}
-                onKeyDown={handleKeyDown}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (passwordError) setPasswordError(null);
-                }}
-                disabled={isLoading}
-                className={`w-full h-[54px] pl-11 pr-12 text-[15px] bg-[#FCFCFE] border rounded-[14px] text-[#1D1D1D] placeholder-[#9CA3AF] outline-none transition-all duration-200 ${
-                  passwordError
-                    ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-4 focus:ring-[#EF4444]/10'
-                    : 'border-[#EAE5DA] focus:border-[#5F6B38] focus:ring-4 focus:ring-[#5F6B38]/10'
-                }`}
-              />
+        ) : (
+          <div className="space-y-4">
+            {/* Google Identity Badge */}
+            <div className="p-3 bg-[#FAF7F2] border border-[#EAE5DA] rounded-[14px] flex items-center justify-between text-xs text-[#5F6B38] font-medium">
+              <div className="flex items-center gap-2">
+                <GoogleIcon />
+                <span>Connected as <strong>{googleEmail}</strong></span>
+              </div>
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                tabIndex={-1}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#1D1D1D] transition-colors"
+                onClick={() => setGoogleConnected(false)}
+                className="underline hover:text-[#4F5A2F]"
               >
-                {showPassword ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
+                Change
               </button>
             </div>
-            {isCapsLockOn && (
-              <p className="text-[10px] flex items-center gap-1.5 mt-1 font-semibold text-[#F59E0B] pl-1">
-                <AlertCircle size={10} />
-                <span>Caps Lock is On</span>
-              </p>
-            )}
-            {passwordError && (
-              <p className="text-[11px] flex items-center gap-1.5 mt-1 font-semibold text-[#EF4444] pl-1">
-                <AlertCircle size={11} />
-                <span>{passwordError}</span>
-              </p>
-            )}
-          </div>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full h-[54px] flex items-center justify-center gap-2 bg-[#5F6B38] hover:bg-[#4F5A2F] text-white text-[15px] font-semibold rounded-[16px] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_25px_rgba(95,107,56,0.25)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none mt-4"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 size={16} className="animate-spin text-white" />
-                <span>Authenticating...</span>
-              </>
-            ) : (
-              <>
-                <span>Continue</span>
-                <ArrowRight size={15} strokeWidth={2} />
-              </>
-            )}
-          </button>
-        </form>
+            {/* Login details Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Username (Pre-filled and disabled) */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#374151] tracking-wide block">
+                  Username
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]">
+                    <User size={16} strokeWidth={1.5} />
+                  </span>
+                  <input
+                    type="text"
+                    value={username}
+                    disabled
+                    className="w-full h-[54px] pl-11 pr-4 text-[15px] bg-[#FAF7F2] border border-[#EAE5DA] rounded-[14px] text-[#9CA3AF] outline-none cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#374151] tracking-wide block">
+                  Password
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]">
+                    <Lock size={16} strokeWidth={1.5} />
+                  </span>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    value={password}
+                    onKeyDown={handleKeyDown}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (passwordError) setPasswordError(null);
+                    }}
+                    disabled={isLoading}
+                    className={`w-full h-[54px] pl-11 pr-12 text-[15px] bg-[#FCFCFE] border rounded-[14px] text-[#1D1D1D] placeholder-[#9CA3AF] outline-none transition-all duration-200 ${
+                      passwordError
+                        ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-4 focus:ring-[#EF4444]/10'
+                        : 'border-[#EAE5DA] focus:border-[#5F6B38] focus:ring-4 focus:ring-[#5F6B38]/10'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex={-1}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#6B7280] hover:text-[#1D1D1D] transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={16} strokeWidth={1.5} /> : <Eye size={16} strokeWidth={1.5} />}
+                  </button>
+                </div>
+                {isCapsLockOn && (
+                  <p className="text-[10px] flex items-center gap-1.5 mt-1 font-semibold text-[#F59E0B] pl-1">
+                    <AlertCircle size={10} />
+                    <span>Caps Lock is On</span>
+                  </p>
+                )}
+                {passwordError && (
+                  <p className="text-[11px] flex items-center gap-1.5 mt-1 font-semibold text-[#EF4444] pl-1">
+                    <AlertCircle size={11} />
+                    <span>{passwordError}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full h-[54px] flex items-center justify-center gap-2 bg-[#5F6B38] hover:bg-[#4F5A2F] text-white text-[15px] font-semibold rounded-[16px] transition-all duration-200 hover:-translate-y-[2px] hover:shadow-[0_8px_25px_rgba(95,107,56,0.25)] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none mt-4"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin text-white" />
+                    <span>Authenticating...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In</span>
+                    <ArrowRight size={15} strokeWidth={2} />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Footer Links */}
         <div className="text-center pt-5 border-t border-[#EAE5DA] mt-3">

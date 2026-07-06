@@ -440,7 +440,7 @@ app.post('/api/auth/firebase', async (req: Request, res: Response) => {
       });
     }
 
-    const token = AuthService.generateToken(user.id, user.email);
+    const token = AuthService.generateToken(user.id, user.email, user.username);
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -450,11 +450,183 @@ app.post('/api/auth/firebase', async (req: Request, res: Response) => {
 
     return res.status(200).json({
       message: 'Authenticated via Firebase',
-      user: { id: user.id, email: user.email },
+      user: { id: user.id, email: user.email, username: user.username },
     });
   } catch (err: any) {
     logger.error('Firebase auth error:', { error: err.message });
     return res.status(401).json({ error: 'Invalid or expired Firebase token' });
+  }
+});
+
+/**
+ * POST /api/auth/google/check
+ * Checks if a Google account is registered, returning its username if it exists.
+ */
+app.post('/api/auth/google/check', async (req: Request, res: Response) => {
+  const { idToken } = req.body;
+  if (!idToken) {
+    return res.status(400).json({ error: 'idToken is required' });
+  }
+
+  if (!getApps().length) {
+    return res.status(503).json({ error: 'Firebase Admin not configured on server' });
+  }
+
+  try {
+    const decoded = await firebaseGetAuth().verifyIdToken(idToken);
+    const email = decoded.email;
+    if (!email) {
+      return res.status(400).json({ error: 'Firebase token has no email' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (user) {
+      return res.status(200).json({
+        isRegistered: true,
+        username: user.username,
+        email,
+      });
+    } else {
+      return res.status(200).json({
+        isRegistered: false,
+        email,
+      });
+    }
+  } catch (err: any) {
+    logger.error('Google registration check error:', { error: err.message });
+    return res.status(401).json({ error: 'Invalid or expired Firebase token' });
+  }
+});
+
+/**
+ * POST /api/auth/google/register
+ * Registers a new user with Google account verification, username, and password.
+ */
+app.post('/api/auth/google/register', async (req: Request, res: Response) => {
+  const { idToken, username, password } = req.body;
+  if (!idToken || !username || !password) {
+    return res.status(400).json({ error: 'idToken, username, and password are required' });
+  }
+
+  if (username.length < 3) {
+    return res.status(400).json({ error: 'Username must be at least 3 characters long' });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+  }
+
+  if (!getApps().length) {
+    return res.status(503).json({ error: 'Firebase Admin not configured on server' });
+  }
+
+  try {
+    const decoded = await firebaseGetAuth().verifyIdToken(idToken);
+    const email = decoded.email;
+    if (!email) {
+      return res.status(400).json({ error: 'Firebase token has no email' });
+    }
+
+    // Check if email already registered
+    const existingEmail = await prisma.user.findUnique({
+      where: { email },
+    });
+    if (existingEmail) {
+      return res.status(400).json({ error: 'This Google account is already registered. Please log in.' });
+    }
+
+    // Check if username already taken
+    const existingUsername = await prisma.user.findUnique({
+      where: { username },
+    });
+    if (existingUsername) {
+      return res.status(400).json({ error: 'This username is already taken. Please choose another one.' });
+    }
+
+    const passwordHash = await AuthService.hashPassword(password);
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        username,
+        passwordHash,
+      },
+    });
+
+    const token = AuthService.generateToken(user.id, user.email, user.username);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(201).json({
+      message: 'User registered successfully',
+      user: { id: user.id, email: user.email, username: user.username },
+    });
+  } catch (err: any) {
+    logger.error('Google registration error:', { error: err.message });
+    return res.status(500).json({ error: 'Registration failed: ' + err.message });
+  }
+});
+
+/**
+ * POST /api/auth/google/login
+ * Logs in a user by matching their Google account, username, and password.
+ */
+app.post('/api/auth/google/login', async (req: Request, res: Response) => {
+  const { idToken, username, password } = req.body;
+  if (!idToken || !username || !password) {
+    return res.status(400).json({ error: 'idToken, username, and password are required' });
+  }
+
+  if (!getApps().length) {
+    return res.status(503).json({ error: 'Firebase Admin not configured on server' });
+  }
+
+  try {
+    const decoded = await firebaseGetAuth().verifyIdToken(idToken);
+    const email = decoded.email;
+    if (!email) {
+      return res.status(400).json({ error: 'Firebase token has no email' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return res.status(401).json({ error: 'You are not registered under this Google account.' });
+    }
+
+    if (user.username !== username) {
+      return res.status(401).json({ error: 'Incorrect username for this Google account.' });
+    }
+
+    const isPasswordValid = await AuthService.comparePassword(password, user.passwordHash);
+    if (!isPasswordValid) {
+      return res.status(401).json({ error: 'Incorrect password.' });
+    }
+
+    const token = AuthService.generateToken(user.id, user.email, user.username);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      message: 'Logged in successfully',
+      user: { id: user.id, email: user.email, username: user.username },
+    });
+  } catch (err: any) {
+    logger.error('Google login error:', { error: err.message });
+    return res.status(401).json({ error: 'Authentication failed: ' + err.message });
   }
 });
 
@@ -699,19 +871,17 @@ app.get('/api/users/me/settings', requireAuth, async (req: AuthenticatedRequest,
     const settings = await prisma.userSettings.findUnique({
       where: { userId },
     });
-
-    if (!settings) {
-      return res.status(200).json({
-        theme: 'dark',
-        signature: null,
-        autoReply: false,
-      });
-    }
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { username: true, email: true },
+    });
 
     return res.status(200).json({
-      theme: settings.theme,
-      signature: settings.signature,
-      autoReply: settings.autoReply,
+      theme: settings?.theme ?? 'dark',
+      signature: settings?.signature ?? null,
+      autoReply: settings?.autoReply ?? false,
+      username: user?.username ?? null,
+      email: user?.email ?? '',
     });
   } catch (error) {
     console.error('Fetch settings error:', error);
@@ -727,6 +897,7 @@ const updateSettingsSchema = z.object({
   theme: z.string().min(1).optional(),
   signature: z.string().nullable().optional(),
   autoReply: z.boolean().optional(),
+  username: z.string().min(3).max(30).optional(),
 });
 
 /**
@@ -786,7 +957,32 @@ app.put('/api/users/me/settings', requireAuth, async (req: AuthenticatedRequest,
       });
     }
 
-    const { theme, signature, autoReply } = validation.data;
+    const { theme, signature, autoReply, username } = validation.data;
+
+    if (username) {
+      const existing = await prisma.user.findFirst({
+        where: { username, NOT: { id: userId } },
+      });
+      if (existing) {
+        return res.status(400).json({ error: 'Username is already taken' });
+      }
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: { username },
+      });
+
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (user) {
+        const token = AuthService.generateToken(user.id, user.email, username);
+        res.cookie('token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: 24 * 60 * 60 * 1000,
+        });
+      }
+    }
 
     const updatedSettings = await prisma.userSettings.upsert({
       where: { userId },
@@ -809,6 +1005,7 @@ app.put('/api/users/me/settings', requireAuth, async (req: AuthenticatedRequest,
         theme: updatedSettings.theme,
         signature: updatedSettings.signature,
         autoReply: updatedSettings.autoReply,
+        username: username || null,
       },
     });
   } catch (error) {

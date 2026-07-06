@@ -25,10 +25,10 @@ export class AuthService {
   }
 
   /**
-   * Generates a JWT token containing the user's ID and email.
+   * Generates a JWT token containing the user's ID, email, and username.
    */
-  public static generateToken(userId: string, email: string): string {
-    return jwt.sign({ userId, email }, JWT_SECRET, {
+  public static generateToken(userId: string, email: string, username?: string | null): string {
+    return jwt.sign({ userId, email, username: username || null }, JWT_SECRET, {
       expiresIn: JWT_EXPIRES_IN,
     });
   }
@@ -38,11 +38,12 @@ export class AuthService {
    */
   public static verifyToken(
     token: string
-  ): { userId: string; email: string } | null {
+  ): { userId: string; email: string; username: string | null } | null {
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as {
         userId: string;
         email: string;
+        username: string | null;
       };
       return decoded;
     } catch (error) {
