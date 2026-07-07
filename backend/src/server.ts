@@ -1045,14 +1045,26 @@ app.put('/api/users/me/settings', requireAuth, async (req: AuthenticatedRequest,
 });
 
 // OAuth2 & Encryption config
-const GMAIL_REDIRECT_URI = process.env.GMAIL_REDIRECT_URI || 
-  (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL.replace(/\/$/, '')}/api/integrations/gmail/callback` : 'http://localhost:8000/api/integrations/gmail/callback');
+const getOAuth2Client = (req?: Request) => {
+  let redirectUri = process.env.GMAIL_REDIRECT_URI;
+  if (!redirectUri && req) {
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : req.protocol;
+    const host = req.get('host');
+    redirectUri = `${protocol}://${host}/api/integrations/gmail/callback`;
+  }
+  if (!redirectUri) {
+    redirectUri = process.env.RENDER_EXTERNAL_URL 
+      ? `${process.env.RENDER_EXTERNAL_URL.replace(/\/$/, '')}/api/integrations/gmail/callback` 
+      : 'http://localhost:8000/api/integrations/gmail/callback';
+  }
+  return new google.auth.OAuth2(
+    process.env.GMAIL_CLIENT_ID,
+    process.env.GMAIL_CLIENT_SECRET,
+    redirectUri
+  );
+};
 
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GMAIL_CLIENT_ID,
-  process.env.GMAIL_CLIENT_SECRET,
-  GMAIL_REDIRECT_URI
-);
+const oauth2Client = getOAuth2Client();
 
 /**
  * GET /api/integrations/gmail/auth
@@ -1085,7 +1097,8 @@ const oauth2Client = new google.auth.OAuth2(
  *         description: Redirect to Google OAuth consent screen
  */
 app.get('/api/integrations/gmail/auth', requireAuth, (req: AuthenticatedRequest, res: Response) => {
-  const url = oauth2Client.generateAuthUrl({
+  const client = getOAuth2Client(req);
+  const url = client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://mail.google.com/'],
     prompt: 'consent',
@@ -1144,10 +1157,11 @@ app.get('/api/integrations/gmail/callback', async (req: Request, res: Response) 
   }
 
   try {
-    const { tokens } = await oauth2Client.getToken(code);
-    oauth2Client.setCredentials(tokens);
+    const client = getOAuth2Client(req);
+    const { tokens } = await client.getToken(code);
+    client.setCredentials(tokens);
 
-    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+    const gmail = google.gmail({ version: 'v1', auth: client });
     const profile = await gmail.users.getProfile({ userId: 'me' });
     const emailAddress = profile.data.emailAddress;
 
@@ -2370,7 +2384,8 @@ app.post('/api/rules/:id/toggle', requireAuth, async (req: AuthenticatedRequest,
  *         description: Redirect to Google OAuth URL
  */
 app.get('/api/auth/google', (req: Request, res: Response) => {
-  const url = oauth2Client.generateAuthUrl({
+  const client = getOAuth2Client(req);
+  const url = client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://mail.google.com/', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'],
     prompt: 'consent',
