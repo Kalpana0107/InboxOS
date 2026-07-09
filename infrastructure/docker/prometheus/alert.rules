@@ -1,0 +1,29 @@
+groups:
+  - name: inboxos_alerts
+    rules:
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High Error Rate on InboxOS Backend"
+          description: "Error rate is above 5% for the last 2 minutes."
+
+      - alert: BullMQQueueDepthHigh
+        expr: bullmq_queue_depth > 1000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "BullMQ Queue Depth > 1000"
+          description: "Queue {{ $labels.queue }} has more than 1000 items."
+
+      - alert: AIAPIProviderDown
+        expr: ai_api_up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "AI API Provider Down"
+          description: "AI API provider {{ $labels.provider }} is down for more than 2 minutes."

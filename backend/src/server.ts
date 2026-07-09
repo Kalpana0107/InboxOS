@@ -933,6 +933,8 @@ app.get('/api/users/me/settings', requireAuth, async (req: AuthenticatedRequest,
       theme: settings?.theme ?? 'dark',
       signature: settings?.signature ?? null,
       autoReply: settings?.autoReply ?? false,
+      whatsappEnabled: settings?.whatsappEnabled ?? false,
+      whatsappNumber: settings?.whatsappNumber ?? null,
       username: user?.username ?? null,
       email: user?.email ?? '',
     });
@@ -951,6 +953,8 @@ const updateSettingsSchema = z.object({
   signature: z.string().nullable().optional(),
   autoReply: z.boolean().optional(),
   username: z.string().min(3).max(30).optional(),
+  whatsappEnabled: z.boolean().optional(),
+  whatsappNumber: z.string().nullable().optional(),
 });
 
 /**
@@ -1011,7 +1015,7 @@ app.put('/api/users/me/settings', requireAuth, async (req: AuthenticatedRequest,
       });
     }
 
-    const { theme, signature, autoReply, username } = validation.data;
+    const { theme, signature, autoReply, username, whatsappEnabled, whatsappNumber } = validation.data;
 
     if (username) {
       const existing = await prisma.user.findFirst({
@@ -1044,12 +1048,16 @@ app.put('/api/users/me/settings', requireAuth, async (req: AuthenticatedRequest,
         ...(theme !== undefined && { theme }),
         ...(signature !== undefined && { signature }),
         ...(autoReply !== undefined && { autoReply }),
+        ...(whatsappEnabled !== undefined && { whatsappEnabled }),
+        ...(whatsappNumber !== undefined && { whatsappNumber }),
       },
       create: {
         userId,
         theme: theme ?? 'dark',
         signature: signature ?? null,
         autoReply: autoReply ?? false,
+        whatsappEnabled: whatsappEnabled ?? false,
+        whatsappNumber: whatsappNumber ?? null,
       },
     });
 

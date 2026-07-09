@@ -40,6 +40,8 @@ model UserSettings {
   timezone            String  @default("UTC")
   digestSchedule      String  @default("daily") // 'daily' | 'weekly' | 'disabled'
   aiPreferenceProfile String?
+  whatsappEnabled     Boolean @default(false)
+  whatsappNumber      String?
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -154,6 +156,8 @@ model Notification {
   sentAt     DateTime @default(now())
   createdAt  DateTime @default(now())
   isRead     Boolean  @default(false)
+  status     String   @default("pending") // 'pending' | 'sent' | 'failed'
+  externalId String?
   metadata   Json?
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -5,6 +5,7 @@ import { indexEmailsWorker } from './jobs/index-emails.job';
 import { calendarEventsWorker } from './jobs/calendar-events.job';
 import { digestWorker } from './jobs/digest-scheduler.job';
 import { reminderWorker } from './jobs/reminder.job';
+import { notificationWorker } from './jobs/notification.job';
 import { logger } from './utils/logger';
 import { emailsProcessedCounter } from './utils/metrics';
 import { RulesEngineService } from './services/rules-engine.service';
@@ -145,9 +146,9 @@ export async function registerWorkerHandlers() {
         if (updatedEmail.category === 'urgent') {
           try {
             const settings = await prisma.userSettings.findFirst({
-              where: { userId: email.userId, telegramEnabled: true },
+              where: { userId: email.userId },
             });
-            if (settings && settings.telegramChatId) {
+            if (settings && settings.telegramEnabled && settings.telegramChatId) {
               await TelegramNotificationService.sendImportantEmailAlert(
                 settings.telegramChatId,
                 {
@@ -157,10 +158,24 @@ export async function registerWorkerHandlers() {
                 }
               );
             }
-          } catch (teleErr) {
+            if (settings && settings.whatsappEnabled && settings.whatsappNumber) {
+              const { notificationQueue } = await import('./jobs/notification.job');
+              await notificationQueue.add('sendWhatsApp', {
+                userId: email.userId,
+                channel: 'whatsapp',
+                emailSummary: {
+                  category: updatedEmail.category,
+                  sender: updatedEmail.sender,
+                  summary: result.summary || updatedEmail.subject,
+                  actionRequired: result.actionabilityScore > 70
+                }
+              });
+              logger.info('[Worker] Queued WhatsApp urgent alert', { emailId });
+            }
+          } catch (err) {
             logger.error(
-              '[Worker] Failed to send Telegram urgent email alert:',
-              teleErr
+              '[Worker] Failed to send urgent email alerts:',
+              err
             );
           }
         }
