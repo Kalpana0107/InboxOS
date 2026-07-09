@@ -101,6 +101,8 @@ const DashboardContent: React.FC = () => {
   const [pushEnabled, setPushEnabled] = useState(true);
   const [telegramAlerts, setTelegramAlerts] = useState(true);
   const [whatsappAlerts, setWhatsappAlerts] = useState(false);
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [minPriority, setMinPriority] = useState(70);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -302,6 +304,8 @@ const DashboardContent: React.FC = () => {
           setDigestSchedule(data.digestSchedule || 'daily');
           setProfileName(data.username || '');
           setProfileEmail(data.email || '');
+          setWhatsappEnabled(data.whatsappEnabled ?? false);
+          setWhatsappNumber(data.whatsappNumber || '');
         }
       } catch (err) {
         console.error('Failed to load user settings:', err);
@@ -425,6 +429,8 @@ const DashboardContent: React.FC = () => {
           timezone,
           digestSchedule,
           username: profileName || undefined,
+          whatsappEnabled,
+          whatsappNumber: whatsappNumber || undefined,
         }),
         credentials: 'include',
       });
@@ -834,6 +840,60 @@ const DashboardContent: React.FC = () => {
                       >
                         {calendarStatus?.connected ? 'Disconnect' : 'Connect'}
                       </button>
+                    </div>
+
+                    {/* WhatsApp Bot */}
+                    <div className="border-t-4 border-black pt-5 space-y-4">
+                      <h4 className="text-xs font-semibold text-gray-800 font-bold">
+                        WhatsApp Control Channel
+                      </h4>
+                      <div className="flex items-center justify-between p-4 rounded-xl bg-white/3 border border-black">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 bg-green-500/10 text-green-500 rounded-xl flex items-center justify-center shrink-0">
+                            <Radio size={18} />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-black font-black">
+                              WhatsApp Integration
+                            </p>
+                            <p
+                              className={`text-[10px] flex items-center gap-1 font-medium ${whatsappEnabled ? 'text-emerald-400' : 'text-gray-600 font-bold'}`}
+                            >
+                              {whatsappEnabled ? (
+                                <>
+                                  <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse" />{' '}
+                                  Active ({whatsappNumber})
+                                </>
+                              ) : (
+                                'Not Configured'
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setWhatsappEnabled(!whatsappEnabled)}
+                          className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all uppercase tracking-wider ${
+                            whatsappEnabled
+                              ? 'bg-white border border-black hover:bg-white border border-black shadow-[2px_2px_0_0_#111] text-gray-800 font-bold border-black'
+                              : 'bg-indigo-600 hover:bg-indigo-500 text-black font-black border-transparent'
+                          }`}
+                        >
+                          {whatsappEnabled ? 'Disconnect' : 'Connect'}
+                        </button>
+                      </div>
+                      
+                      {whatsappEnabled && (
+                        <div className="flex flex-col gap-2 mt-2">
+                          <label className="text-[10px] font-bold text-gray-700">Phone Number (with Country Code)</label>
+                          <input
+                            type="text"
+                            value={whatsappNumber}
+                            onChange={(e) => setWhatsappNumber(e.target.value)}
+                            placeholder="+1234567890"
+                            className="w-full bg-transparent border-b-2 border-black/20 focus:border-black outline-none py-1.5 text-sm font-medium transition-colors"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     {/* Telegram Bot */}
