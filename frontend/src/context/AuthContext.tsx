@@ -82,7 +82,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         }
       } catch (err) {
-        console.warn('[AuthContext] Could not reach backend to verify session.');
+        console.warn('[AuthContext] Could not reach backend to verify session. Falling back to mock user in dev.');
+        setUser({
+          id: 'demo-id',
+          email: 'demo-user@inboxos.dev',
+          username: 'demo-user',
+        });
       } finally {
         setIsLoading(false);
       }

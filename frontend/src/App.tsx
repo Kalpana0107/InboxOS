@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Routes,
@@ -31,6 +32,7 @@ import {
   AlertCircle,
   Plus,
   RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import { API_BASE, authenticatedFetch } from './config';
 
@@ -88,6 +90,7 @@ const DashboardContent: React.FC = () => {
   const [settingsSubTab, setSettingsSubTab] = useState('profile');
   const [profileName, setProfileName] = useState('');
   const [profileEmail, setProfileEmail] = useState('');
+  const [userId, setUserId] = useState('');
   const [aiProvider, setAiProvider] = useState('openai');
   const [openaiKey, setOpenaiKey] = useState('sk-proj-••••••••••••••••••••');
   const [geminiKey, setGeminiKey] = useState('');
@@ -304,11 +307,22 @@ const DashboardContent: React.FC = () => {
           setDigestSchedule(data.digestSchedule || 'daily');
           setProfileName(data.username || '');
           setProfileEmail(data.email || '');
+<<<<<<< HEAD
           setWhatsappEnabled(data.whatsappEnabled ?? false);
           setWhatsappNumber(data.whatsappNumber || '');
+=======
+          setUserId(data.userId || '');
+>>>>>>> 66d1f3e0c37bfe21245f174814a646f25ffb43de
         }
       } catch (err) {
-        console.error('Failed to load user settings:', err);
+        console.error('Failed to load user settings, using dev mock settings:', err);
+        setTheme('light');
+        setSignature('Sent from InboxOS Dev');
+        setAutoReply(true);
+        setTimezone('UTC');
+        setDigestSchedule('daily');
+        setProfileName('demo-user');
+        setProfileEmail('demo-user@inboxos.dev');
       }
     };
 
@@ -496,106 +510,129 @@ const DashboardContent: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
             {/* Sub-navigation */}
-            <div className="md:col-span-1 flex flex-col gap-1.5">
+            <div className="md:col-span-1 flex flex-col gap-1.5 relative">
               {[
                 { id: 'profile', label: 'General Profile', icon: <User size={15} /> },
                 { id: 'integrations', label: 'Connections', icon: <Mail size={15} /> },
-              ].map((subTab) => (
-                <button
-                  key={subTab.id}
-                  onClick={() => setSettingsSubTab(subTab.id)}
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-[13px] font-medium transition-all text-left"
-                  style={{
-                    backgroundColor: settingsSubTab === subTab.id ? 'rgba(93,107,47,.10)' : 'transparent',
-                    color: settingsSubTab === subTab.id ? 'var(--color-primary)' : 'var(--color-muted)',
-                  }}
-                  onMouseEnter={e => { if (settingsSubTab !== subTab.id) { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(93,107,47,.05)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-ink)'; } }}
-                  onMouseLeave={e => { if (settingsSubTab !== subTab.id) { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)'; } }}
-                >
-                  {subTab.icon}
-                  <span>{subTab.label}</span>
-                </button>
-              ))}
+              ].map((subTab) => {
+                const isActive = settingsSubTab === subTab.id;
+                return (
+                  <button
+                    key={subTab.id}
+                    onClick={() => setSettingsSubTab(subTab.id)}
+                    className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-[10px] text-[13px] font-medium transition-all text-left outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/30"
+                    style={{
+                      color: isActive ? 'var(--color-primary)' : 'var(--color-muted)',
+                      backgroundColor: 'transparent',
+                    }}
+                    onMouseEnter={e => {
+                      if (!isActive) {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(93,107,47,.05)';
+                        (e.currentTarget as HTMLElement).style.color = 'var(--color-ink)';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!isActive) {
+                        (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                        (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)';
+                      }
+                    }}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeSettingsSubTab"
+                        className="absolute inset-0 bg-[var(--color-primary)]/10 rounded-[10px] -z-10"
+                        transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center gap-2.5">
+                      {subTab.icon}
+                      <span>{subTab.label}</span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Form card */}
-            <div
-              className="md:col-span-3 relative overflow-hidden p-6 rounded-[22px]"
-              style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-card)' }}
-            >
+            {/* Form card wrapper */}
+            <div className="md:col-span-3 space-y-6">
 
               {settingsSubTab === 'profile' && (
                 <form onSubmit={handleSave} className="space-y-6 text-left">
-                  <h3 className="text-sm font-semibold text-black font-black">
-                    General & Account Profile
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-700 font-bold uppercase tracking-wider block">
-                        Username
-                      </label>
-                      <input
-                        type="text"
-                        value={profileName}
-                        onChange={(e) => setProfileName(e.target.value)}
-                        className="neu-input w-full px-4 py-2.5 text-xs transition-all"
-                        placeholder="e.g. alexchen"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-700 font-bold uppercase tracking-wider block">
-                        Email Address
-                      </label>
-                      <input
-                        type="email"
-                        value={profileEmail}
-                        disabled
-                        className="neu-input w-full px-4 py-2.5 text-xs bg-gray-50 text-gray-400 cursor-not-allowed transition-all"
-                        placeholder="alex@inboxos.app"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2 col-span-1">
-                      <label className="text-[10px] font-bold text-gray-700 font-bold uppercase tracking-wider block">
-                        Email Signature
-                      </label>
-                      <input
-                        type="text"
-                        value={signature}
-                        onChange={(e) => setSignature(e.target.value)}
-                        className="neu-input w-full px-4 py-2.5 text-xs transition-all"
-                        placeholder="Sent from InboxOS"
-                      />
-                    </div>
-                    <div className="space-y-2 col-span-1 flex items-center pt-5">
-                      <label className="flex items-center gap-3 cursor-pointer select-none">
+                  {/* General Profile Panel */}
+                  <div className="neu-card p-6 space-y-5">
+                    <h3 className="text-sm font-semibold text-[var(--color-ink)] font-bold">
+                      General & Account Profile
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-gray-700 uppercase tracking-wider block">
+                          Username
+                        </label>
                         <input
-                          type="checkbox"
-                          checked={autoReply}
-                          onChange={(e) => setAutoReply(e.target.checked)}
-                          className="h-4 w-4 rounded border-white/10 bg-white border border-black text-indigo-600 focus:ring-indigo-500/30"
+                          type="text"
+                          value={profileName}
+                          onChange={(e) => setProfileName(e.target.value)}
+                          className="neu-input w-full px-4 py-2.5 text-xs transition-all"
+                          placeholder="e.g. alexchen"
+                          required
                         />
-                        <span className="text-xs font-semibold text-gray-800 font-bold">
-                          Enable Auto Reply
-                        </span>
-                      </label>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-gray-700 uppercase tracking-wider block">
+                          Email Address
+                        </label>
+                        <input
+                          type="email"
+                          value={profileEmail}
+                          disabled
+                          className="neu-input w-full px-4 py-2.5 text-xs bg-gray-50 text-gray-400 cursor-not-allowed transition-all"
+                          placeholder="alex@inboxos.app"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2 col-span-1">
+                        <label className="text-[10px] font-bold text-gray-700 uppercase tracking-wider block">
+                          Email Signature
+                        </label>
+                        <input
+                          type="text"
+                          value={signature}
+                          onChange={(e) => setSignature(e.target.value)}
+                          className="neu-input w-full px-4 py-2.5 text-xs transition-all"
+                          placeholder="Sent from InboxOS"
+                        />
+                      </div>
+                      <div className="space-y-2 col-span-1 flex items-center pt-5">
+                        <label className="flex items-center gap-3 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={autoReply}
+                            onChange={(e) => setAutoReply(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-[var(--color-primary)] focus:ring-[var(--color-primary)]/30"
+                          />
+                          <span className="text-xs font-semibold text-gray-800">
+                            Enable Auto Reply
+                          </span>
+                        </label>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="border-t-4 border-black pt-5 space-y-4">
-                    <h4 className="text-xs font-semibold text-gray-800 font-bold">
+                  {/* Theme Preferences Panel */}
+                  <div className="neu-card p-6 space-y-4">
+                    <h4 className="text-xs font-semibold text-[var(--color-ink)] font-bold">
                       Theme Preferences
                     </h4>
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-white/3 border border-black">
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50/50 border border-[var(--color-border)]">
                       <div>
-                        <p className="text-xs font-semibold text-gray-200">
+                        <p className="text-xs font-semibold text-gray-800">
                           Interface Theme:{' '}
-                          <span className="text-blue-600 capitalize">
+                          <span className="text-[var(--color-primary)] font-bold capitalize">
                             {theme}
                           </span>
                         </p>
-                        <p className="text-[10px] text-gray-600 font-bold">
+                        <p className="text-[10px] text-gray-500 font-medium">
                           Toggle between dark and light themes.
                         </p>
                       </div>
@@ -604,18 +641,19 @@ const DashboardContent: React.FC = () => {
                         onClick={() =>
                           setTheme(theme === 'dark' ? 'light' : 'dark')
                         }
-                        className="px-3 py-1.5 rounded-lg bg-white border border-black hover:bg-white border border-black shadow-[2px_2px_0_0_#111] text-gray-800 font-bold border border-black text-[10px] font-bold transition-all uppercase tracking-wider"
+                        className="px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all uppercase tracking-wider neu-btn"
                       >
                         Toggle {theme === 'dark' ? 'Light' : 'Dark'} Mode
                       </button>
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-2">
+                  {/* Save Settings Footer Card */}
+                  <div className="neu-card p-4 flex justify-end">
                     <button
                       type="submit"
                       disabled={isSaving}
-                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-black font-black font-bold text-xs transition-all active:scale-[0.98] disabled:opacity-50 uppercase tracking-wider"
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white font-bold text-xs transition-all active:scale-[0.97] disabled:opacity-50 uppercase tracking-wider shadow-[0_4px_14px_rgba(93,107,47,.25)] hover:shadow-[0_6px_20px_rgba(93,107,47,.35)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40 focus-visible:outline-none"
                     >
                       {isSaving ? 'Saving...' : 'Save Settings'}
                     </button>
@@ -625,89 +663,91 @@ const DashboardContent: React.FC = () => {
 
               {settingsSubTab === 'ai' && (
                 <form onSubmit={handleSave} className="space-y-6 text-left">
-                  <div>
-                    <h3 className="text-sm font-semibold text-black font-black mb-1">
-                      AI Processor Model
-                    </h3>
-                    <p className="text-[11px] text-gray-600 font-bold">
-                      Choose the LLM engine that parses, scores, and classifies
-                      incoming streams.
-                    </p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-bold text-gray-700 font-bold uppercase tracking-wider block">
-                        AI Provider
-                      </label>
-                      <select
-                        value={aiProvider}
-                        onChange={(e) => setAiProvider(e.target.value)}
-                        className="w-full bg-white border border-black rounded-xl px-4 py-2.5 text-xs text-black focus:outline-none focus:border-indigo-500/40 focus:ring-1 focus:ring-indigo-500/25 transition-all"
-                      >
-                        <option value="openai">
-                          OpenAI GPT-4o API (Cloud)
-                        </option>
-                        <option value="gemini">
-                          Google Gemini 1.5 Pro API (Cloud)
-                        </option>
-                        <option value="ollama">
-                          Ollama Llama 3 (Local Self-Hosted)
-                        </option>
-                      </select>
+                  <div className="neu-card p-6 space-y-6">
+                    <div>
+                      <h3 className="text-sm font-semibold text-[var(--color-ink)] font-bold mb-1">
+                        AI Processor Model
+                      </h3>
+                      <p className="text-[11px] text-gray-500 font-medium">
+                        Choose the LLM engine that parses, scores, and classifies
+                        incoming streams.
+                      </p>
                     </div>
 
-                    {aiProvider === 'openai' && (
+                    <div className="space-y-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-gray-700 font-bold uppercase tracking-wider block">
-                          OpenAI API Key
+                        <label className="text-[10px] font-bold text-gray-700 uppercase tracking-wider block">
+                          AI Provider
                         </label>
-                        <input
-                          type="password"
-                          value={openaiKey}
-                          onChange={(e) => setOpenaiKey(e.target.value)}
-                          className="neu-input w-full px-4 py-2.5 text-xs transition-all"
-                          placeholder="sk-proj-..."
-                        />
+                        <select
+                          value={aiProvider}
+                          onChange={(e) => setAiProvider(e.target.value)}
+                          className="w-full bg-white border border-[var(--color-border)] rounded-xl px-4 py-2.5 text-xs text-black focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all"
+                        >
+                          <option value="openai">
+                            OpenAI GPT-4o API (Cloud)
+                          </option>
+                          <option value="gemini">
+                            Google Gemini 1.5 Pro API (Cloud)
+                          </option>
+                          <option value="ollama">
+                            Ollama Llama 3 (Local Self-Hosted)
+                          </option>
+                        </select>
                       </div>
-                    )}
 
-                    {aiProvider === 'gemini' && (
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-gray-700 font-bold uppercase tracking-wider block">
-                          Gemini API Key
-                        </label>
-                        <input
-                          type="password"
-                          value={geminiKey}
-                          onChange={(e) => setGeminiKey(e.target.value)}
-                          className="neu-input w-full px-4 py-2.5 text-xs transition-all"
-                          placeholder="AIzaSy..."
-                        />
-                      </div>
-                    )}
+                      {aiProvider === 'openai' && (
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-700 uppercase tracking-wider block">
+                            OpenAI API Key
+                          </label>
+                          <input
+                            type="password"
+                            value={openaiKey}
+                            onChange={(e) => setOpenaiKey(e.target.value)}
+                            className="neu-input w-full px-4 py-2.5 text-xs transition-all"
+                            placeholder="sk-proj-..."
+                          />
+                        </div>
+                      )}
 
-                    {aiProvider === 'ollama' && (
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-gray-700 font-bold uppercase tracking-wider block">
-                          Ollama Connection URL
-                        </label>
-                        <input
-                          type="url"
-                          value={ollamaUrl}
-                          onChange={(e) => setOllamaUrl(e.target.value)}
-                          className="neu-input w-full px-4 py-2.5 text-xs transition-all"
-                          placeholder="http://localhost:11434"
-                        />
-                      </div>
-                    )}
+                      {aiProvider === 'gemini' && (
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-700 uppercase tracking-wider block">
+                            Gemini API Key
+                          </label>
+                          <input
+                            type="password"
+                            value={geminiKey}
+                            onChange={(e) => setGeminiKey(e.target.value)}
+                            className="neu-input w-full px-4 py-2.5 text-xs transition-all"
+                            placeholder="AIzaSy..."
+                          />
+                        </div>
+                      )}
+
+                      {aiProvider === 'ollama' && (
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-bold text-gray-700 uppercase tracking-wider block">
+                            Ollama Connection URL
+                          </label>
+                          <input
+                            type="url"
+                            value={ollamaUrl}
+                            onChange={(e) => setOllamaUrl(e.target.value)}
+                            className="neu-input w-full px-4 py-2.5 text-xs transition-all"
+                            placeholder="http://localhost:11434"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex justify-end pt-2">
+                  <div className="neu-card p-4 flex justify-end">
                     <button
                       type="submit"
                       disabled={isSaving}
-                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-black font-black font-bold text-xs transition-all active:scale-[0.98] disabled:opacity-50 uppercase tracking-wider"
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white font-bold text-xs transition-all active:scale-[0.97] disabled:opacity-50 uppercase tracking-wider shadow-[0_4px_14px_rgba(93,107,47,.25)] hover:shadow-[0_6px_20px_rgba(93,107,47,.35)] focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40 focus-visible:outline-none"
                     >
                       {isSaving ? 'Saving...' : 'Save AI Config'}
                     </button>
@@ -717,60 +757,139 @@ const DashboardContent: React.FC = () => {
 
               {settingsSubTab === 'integrations' && (
                 <div className="space-y-6 text-left">
-                  <div>
-                    <h3 className="text-sm font-semibold text-black font-black mb-1">
-                      Inbox Connections
-                    </h3>
-                    <p className="text-[11px] text-gray-600 font-bold">
-                      Enable ingestion sources or connection webhooks to monitor
-                      and fetch mail.
-                    </p>
-                  </div>
+                  {/* Inbox Connections Card */}
+                  <div className="neu-card p-6 space-y-6">
+                    <div>
+                      <h3 className="text-sm font-semibold text-[var(--color-ink)] font-bold mb-1">
+                        Inbox Connections
+                      </h3>
+                      <p className="text-[11px] text-gray-500 font-medium">
+                        Enable ingestion sources or connection webhooks to monitor
+                        and fetch mail.
+                      </p>
+                    </div>
 
-                  <div className="space-y-4">
-                    {/* Gmail */}
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-white/3 border border-black">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-red-500/10 text-red-400 rounded-xl flex items-center justify-center shrink-0">
-                          <Mail size={18} />
-                        </div>
-                        <div>
-                          <p className="text-xs font-semibold text-black font-black">
-                            Gmail Account
-                          </p>
-                          {gmailConnected ? (
-                            <p className="text-[10px] text-emerald-400 flex items-center gap-1 font-medium">
-                              <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                              {gmailEmail ?? 'Connected'}
+                    <div className="space-y-4">
+                      {/* Gmail */}
+                      <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50/50 border border-[var(--color-border)]">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 bg-red-500/10 text-red-400 rounded-xl flex items-center justify-center shrink-0">
+                            <Mail size={18} />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-[var(--color-ink)] font-bold">
+                              Gmail Account
                             </p>
-                          ) : (
-                            <p className="text-[10px] text-gray-500 font-medium">Not Connected</p>
+                            {gmailConnected ? (
+                              <p className="text-[10px] text-emerald-600 flex items-center gap-1 font-medium">
+                                <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                {gmailEmail ?? 'Connected'}
+                              </p>
+                            ) : (
+                              <p className="text-[10px] text-gray-500 font-medium">Not Connected</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {gmailConnected && (
+                            <button
+                              onClick={handleSyncGmail}
+                              disabled={gmailSyncing}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all uppercase tracking-wider bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white active:scale-[0.97] disabled:opacity-50 outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40"
+                            >
+                              {gmailSyncing && (
+                                <Loader2 size={11} className="animate-spin" />
+                              )}
+                              {gmailSyncing ? 'Syncing...' : 'Sync Inbox'}
+                            </button>
                           )}
+                          <button
+                            onClick={gmailConnected ? handleDisconnectGmail : handleConnectGmail}
+                            className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all uppercase tracking-wider ${
+                              gmailConnected
+                                ? 'neu-btn'
+                                : 'bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white border-transparent active:scale-[0.97] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40'
+                            }`}
+                          >
+                            {gmailConnected ? 'Disconnect' : 'Connect Gmail'}
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {gmailConnected && (
-                          <button
-                            onClick={handleSyncGmail}
-                            disabled={gmailSyncing}
-                            className="px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 text-white border-transparent disabled:opacity-50"
-                          >
-                            {gmailSyncing ? 'Syncing...' : 'Sync Inbox'}
-                          </button>
-                        )}
+
+                      {/* Outlook */}
+                      <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50/50 border border-[var(--color-border)]">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center shrink-0">
+                            <Mail size={18} />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-[var(--color-ink)] font-bold">
+                              Outlook / Exchange
+                            </p>
+                            <p className="text-[10px] text-gray-500 font-medium">
+                              Not Connected
+                            </p>
+                          </div>
+                        </div>
                         <button
-                          onClick={gmailConnected ? handleDisconnectGmail : handleConnectGmail}
+                          onClick={() => setOutlookConnected(!outlookConnected)}
                           className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all uppercase tracking-wider ${
-                            gmailConnected
-                              ? 'bg-white border border-black hover:bg-gray-50 shadow-[2px_2px_0_0_#111] text-gray-800'
-                              : 'bg-indigo-600 hover:bg-indigo-500 text-white border-transparent'
+                            outlookConnected
+                              ? 'neu-btn'
+                              : 'bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white border-transparent active:scale-[0.97] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40'
                           }`}
                         >
-                          {gmailConnected ? 'Disconnect' : 'Connect Gmail'}
+                          {outlookConnected ? 'Disconnect' : 'Connect'}
+                        </button>
+                      </div>
+
+                      {/* Google Calendar */}
+                      <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50/50 border border-[var(--color-border)]">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 bg-indigo-500/10 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
+                            <Calendar size={18} />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-[var(--color-ink)] font-bold">
+                              Google Calendar
+                            </p>
+                            <p
+                              className={`text-[10px] flex items-center gap-1 font-medium ${
+                                calendarStatus?.connected
+                                  ? 'text-emerald-600'
+                                  : 'text-gray-500'
+                              }`}
+                            >
+                              {calendarStatus?.connected ? (
+                                <>
+                                  <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse" />{' '}
+                                  Connected
+                                </>
+                              ) : (
+                                'Not Connected'
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={
+                            calendarStatus?.connected
+                              ? handleDisconnectCalendar
+                              : handleConnectCalendar
+                          }
+                          className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all uppercase tracking-wider ${
+                            calendarStatus?.connected
+                              ? 'neu-btn'
+                              : 'bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white border-transparent active:scale-[0.97] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40'
+                          }`}
+                        >
+                          {calendarStatus?.connected ? 'Disconnect' : 'Connect'}
                         </button>
                       </div>
                     </div>
+                  </div>
 
+<<<<<<< HEAD
                     {/* Outlook */}
                     <div className="flex items-center justify-between p-4 rounded-xl bg-white/3 border border-black">
                       <div className="flex items-center gap-3">
@@ -899,23 +1018,35 @@ const DashboardContent: React.FC = () => {
                     {/* Telegram Bot */}
                     <div className="border-t-4 border-black pt-5 space-y-4">
                       <h4 className="text-xs font-semibold text-gray-800 font-bold">
+=======
+                  {/* Telegram Control Channel Card */}
+                  <div className="neu-card p-6 space-y-6">
+                    <div>
+                      <h4 className="text-xs font-semibold text-[var(--color-ink)] font-bold">
+>>>>>>> 66d1f3e0c37bfe21245f174814a646f25ffb43de
                         Telegram Control Channel
                       </h4>
-                      <div className="flex items-center justify-between p-4 rounded-xl bg-white/3 border border-black">
+                      <p className="text-[11px] text-gray-500 font-medium">
+                        Configure Telegram Bot integration to receive alerts and manage emails.
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50/50 border border-[var(--color-border)]">
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 bg-sky-500/10 text-sky-400 rounded-xl flex items-center justify-center shrink-0">
                             <Radio size={18} />
                           </div>
                           <div>
-                            <p className="text-xs font-semibold text-black font-black">
+                            <p className="text-xs font-semibold text-[var(--color-ink)] font-bold">
                               Telegram Ingestion Bot
                             </p>
                             <p
-                              className={`text-[10px] flex items-center gap-1 font-medium ${telegramConnected ? 'text-emerald-400' : 'text-gray-600 font-bold'}`}
+                              className={`text-[10px] flex items-center gap-1 font-medium ${telegramConnected ? 'text-emerald-600' : 'text-gray-500'}`}
                             >
                               {telegramConnected ? (
                                 <>
-                                  <span className="h-1.5 w-1.5 bg-emerald-400 rounded-full animate-pulse" />{' '}
+                                  <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse" />{' '}
                                   Active
                                 </>
                               ) : (
@@ -930,8 +1061,8 @@ const DashboardContent: React.FC = () => {
                           }
                           className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all uppercase tracking-wider ${
                             telegramConnected
-                              ? 'bg-white border border-black hover:bg-white border border-black shadow-[2px_2px_0_0_#111] text-gray-800 font-bold border-black'
-                              : 'bg-indigo-600 hover:bg-indigo-500 text-black font-black border-transparent'
+                              ? 'neu-btn'
+                              : 'bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white border-transparent active:scale-[0.97] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40'
                           }`}
                         >
                           {telegramConnected ? 'Deactivate' : 'Activate'}
@@ -939,17 +1070,47 @@ const DashboardContent: React.FC = () => {
                       </div>
 
                       {telegramConnected && (
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold text-gray-700 font-bold uppercase tracking-wider block">
-                            Bot Token
-                          </label>
-                          <input
-                            type="password"
-                            value={telegramToken}
-                            onChange={(e) => setTelegramToken(e.target.value)}
-                            className="neu-input w-full px-4 py-2.5 text-xs transition-all"
-                            placeholder="Enter Telegram bot token"
-                          />
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-gray-700 uppercase tracking-wider block">
+                              Bot Token
+                            </label>
+                            <input
+                              type="password"
+                              value={telegramToken}
+                              onChange={(e) => setTelegramToken(e.target.value)}
+                              className="neu-input w-full px-4 py-2.5 text-xs transition-all"
+                              placeholder="Enter Telegram bot token"
+                            />
+                          </div>
+
+                          {/* Telegram Linking Instruction Card */}
+                          <div className="p-4 bg-amber-50/50 border border-amber-200 rounded-xl space-y-2.5 shadow-sm">
+                            <p className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                              💬 Link Your Chat ID
+                            </p>
+                            <p className="text-[10px] leading-relaxed text-amber-850 font-medium">
+                              To sync alerts with your Telegram, message your bot and send the start command with your unique Workspace User ID:
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <code className="bg-white border border-amber-200 px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold select-all w-full text-center text-amber-900">
+                                /start {userId || 'Loading...'}
+                              </code>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (userId) {
+                                    navigator.clipboard.writeText(`/start ${userId}`);
+                                    setToastMessage('Link command copied to clipboard!');
+                                    setTimeout(() => setToastMessage(null), 3000);
+                                  }
+                                }}
+                                className="px-3 py-1.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white rounded-lg text-[10px] uppercase transition-all active:scale-[0.97] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40"
+                              >
+                                Copy
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>

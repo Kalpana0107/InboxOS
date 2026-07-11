@@ -90,7 +90,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled || isLoading) return;
-    e.currentTarget.style.transform = 'translateY(0) scale(0.98)';
+    e.currentTarget.style.transform = 'translateY(0) scale(0.97)';
     e.currentTarget.style.boxShadow = 'none';
   };
 
@@ -104,7 +104,7 @@ export const Button: React.FC<ButtonProps> = ({
     <button
       type={type}
       disabled={disabled || isLoading}
-      className={className}
+      className={`focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40 focus-visible:ring-offset-1 outline-none transition-all ${className}`}
       style={{
         ...baseStyle,
         ...variantStyle[variant],

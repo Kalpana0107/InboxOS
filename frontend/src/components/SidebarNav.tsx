@@ -112,20 +112,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({
             openCompose();
             handleLinkClick();
           }}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] font-semibold rounded-[10px] transition-all"
-          style={{
-            backgroundColor: 'var(--color-primary)',
-            color: '#fff',
-            boxShadow: '0 4px 14px rgba(93,107,47,.25)',
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(93,107,47,.35)';
-            (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 14px rgba(93,107,47,.25)';
-            (e.currentTarget as HTMLElement).style.transform = '';
-          }}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] font-semibold rounded-[10px] neu-btn-accent transition-all duration-200"
         >
           <Plus size={15} />
           <span>Compose</span>

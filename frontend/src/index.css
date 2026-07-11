@@ -131,13 +131,22 @@
     font-size: 13px;
     letter-spacing: 0.01em;
     box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
     cursor: pointer;
+    outline: none;
   }
   .neu-btn:hover {
     border-color: var(--color-primary);
     box-shadow: var(--shadow-card);
     transform: translateY(-1px);
+  }
+  .neu-btn:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: var(--shadow-inset);
+  }
+  .neu-btn:focus-visible {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(93, 107, 47, 0.20);
   }
 
   .neu-btn-accent {
@@ -150,12 +159,21 @@
     font-size: 13px;
     letter-spacing: 0.01em;
     box-shadow: 0 4px 14px rgba(93,107,47,.25);
-    transition: box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+    transition: box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease, background-color 0.2s ease;
     cursor: pointer;
+    outline: none;
   }
   .neu-btn-accent:hover {
     box-shadow: 0 6px 20px rgba(93,107,47,.35);
     transform: translateY(-1px);
+    background-color: #4E5A27; /* slight darken of primary #5D6B2F */
+  }
+  .neu-btn-accent:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: none;
+  }
+  .neu-btn-accent:focus-visible {
+    box-shadow: 0 0 0 3px rgba(93, 107, 47, 0.40);
   }
 
   .neu-btn-cta {
@@ -167,12 +185,21 @@
     font-weight: 600;
     font-size: 13px;
     box-shadow: 0 4px 14px rgba(93,107,47,.25);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    transition: box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
     cursor: pointer;
+    outline: none;
   }
   .neu-btn-cta:hover {
     box-shadow: 0 6px 20px rgba(93,107,47,.35);
     transform: translateY(-1px);
+    background-color: #4E5A27;
+  }
+  .neu-btn-cta:active {
+    transform: translateY(0) scale(0.97);
+    box-shadow: none;
+  }
+  .neu-btn-cta:focus-visible {
+    box-shadow: 0 0 0 3px rgba(93, 107, 47, 0.40);
   }
 
   /* ── Badge ── */

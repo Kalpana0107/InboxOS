@@ -155,22 +155,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Logout */}
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg transition-all"
-              style={{
-                border: '1px solid var(--color-border)',
-                color: 'var(--color-muted)',
-                backgroundColor: 'transparent',
-              }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLElement).style.backgroundColor = '#FEF0EE';
-                (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-danger)';
-                (e.currentTarget as HTMLElement).style.color = 'var(--color-danger)';
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
-                (e.currentTarget as HTMLElement).style.color = 'var(--color-muted)';
-              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg border border-[var(--color-border)] text-[var(--color-muted)] bg-transparent hover:bg-[#FEF0EE] hover:border-[var(--color-danger)] hover:text-[var(--color-danger)] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-[var(--color-danger)]/30 focus-visible:outline-none transition-all duration-200"
               title="Log Out"
             >
               <LogOut size={13} />
